@@ -1,38 +1,45 @@
 # Development Project Progress
 
 **Project:** lumen
-**Status:** Planning
+**Status:** Phase 1 complete
 **Last Updated:** 2026-04-05
 
 ## Current Status Overview
 
 ### Development Phase
 
-- **Current Phase:** Architecture & Design
-- **Phase Progress:** 5% complete
-- **Overall Project Progress:** 5% complete
+- **Current Phase:** Phase 2 — Core Data Layer
+- **Phase Progress:** Phase 1 100% complete
+- **Overall Project Progress:** ~15% complete
 
 ### Recent Accomplishments
 
 - README written and refined — 2026-04-05
 - Project structure and command surface designed — 2026-04-05
 - specs/ scaffolded with planning, progress, and implementation docs — 2026-04-05
+- Phase 1 complete: git repo, pyproject.toml, uv.lock, Typer app skeleton with all global
+  flags (`--version`, `--verbose`, `--quiet`, `--no-color`, `--config`), config resolution
+  layer (XDG paths, TOML file, env vars, CLI flag merging, 0600 credential write), all 11
+  command stubs with full `--help` strings and argument signatures, `lumen init` (interactive
+  Rich prompts, writes config), `lumen doctor` (async connectivity checks), full package
+  skeleton (`clients/`, `core/`, `display/`, `zotero/`), test scaffold — 2026-04-05
 
 ### Active Work
 
-- [ ] Initialize repo and `pyproject.toml` — target 2026-04-12
-- [ ] Typer app skeleton with global flags — target 2026-04-12
-- [ ] Config resolution layer — target 2026-04-14
+- [ ] Pydantic models (`Paper`, `Author`, `SearchResult`) — already written; ready to test
+- [ ] arXiv client (Atom feed via feedparser)
+- [ ] Semantic Scholar client (REST API, pagination)
 
 ## Milestone Tracking
 
 ### Completed Milestones
 
 - [x] ~~README and project design~~ — 2026-04-05
+- [x] ~~Phase 1: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
 
 ### Upcoming Milestones
 
-- [ ] Phase 1 complete: repo scaffolded, Typer skeleton, config layer — target 2026-04-14
+- [x] ~~Phase 1 complete: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
 - [ ] Phase 2 complete: all three API clients + dedup/ranking/cache — target 2026-04-28
 - [ ] Phase 3 complete: all 11 commands implemented — target 2026-05-26
 - [ ] Phase 4 complete: display layer polished, errors finalized — target 2026-06-09
@@ -46,13 +53,12 @@ _None identified yet._
 
 ### Build Health
 
-- **Last Successful Build:** N/A (not yet scaffolded)
-- **Build Time:** N/A
-- **Build Warnings:** N/A
+- **Last Successful Build:** 2026-04-05 (`uv sync` — 41 packages, clean install)
+- **Build Warnings:** None
 
 ### Test Results
 
-- **Unit Tests:** N/A
+- **Unit Tests:** N/A (stub-only — Phase 2 will add first tests)
 - **Integration Tests:** N/A
 - **Test Coverage:** N/A
 
@@ -67,11 +73,25 @@ _None identified yet._
 
 ### Completed Features
 
-_None yet._
+- [x] `pyproject.toml` with Hatchling backend, all runtime and dev dependencies
+- [x] `flake.nix` dev shell (Python 3.12, uv, ruff, pyright, git)
+- [x] `src/lumen/` package skeleton: all modules and subpackages
+- [x] `lumen.cli` — Typer app, global flags, command registration, entry point
+- [x] `lumen.config` — layered config (XDG, TOML, env vars, CLI flags), `write_config` (0600)
+- [x] `lumen.exceptions` — `LumenError` hierarchy with exit codes
+- [x] `lumen._async` — `run()` utility for per-command async execution
+- [x] `lumen.core.models` — `Paper`, `Author`, `SearchResult` Pydantic models
+- [x] All 11 command stubs with full `--help` text and argument/option signatures
+- [x] `lumen init` — interactive Rich prompts, writes config.toml
+- [x] `lumen doctor` — async connectivity checks for arXiv, Semantic Scholar, Zotero
+- [x] `clients/base.py` — abstract client with retry, backoff, circuit breaker skeleton
+- [x] Stub skeletons for `clients/`, `core/`, `display/`, `zotero/`
+- [x] `tests/conftest.py` with basic fixtures
+- [x] ruff lint + format passing clean
 
 ### In Progress
 
-- [ ] Project scaffolding — 0% complete
+- [ ] Phase 2: Core data layer
 
 ### Planned
 
