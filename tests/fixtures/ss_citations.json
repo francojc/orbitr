@@ -1,0 +1,145 @@
+{
+  "offset": 0,
+  "next": 3,
+  "data": [
+    {
+      "citingPaper": {
+        "paperId": "13dca8eda247f0302df63eca58b1d23a005fd79d",
+        "externalIds": {
+          "DBLP": "journals/displays/ChengLCWY26",
+          "DOI": "10.1016/j.displa.2026.103412",
+          "CorpusId": 286232068
+        },
+        "url": "https://www.semanticscholar.org/paper/13dca8eda247f0302df63eca58b1d23a005fd79d",
+        "title": "A lightweight multi-attention and context fusion network for small object detection in UAV images",
+        "venue": "Displays (Guildford)",
+        "year": 2026,
+        "citationCount": 0,
+        "openAccessPdf": {
+          "url": "",
+          "status": null,
+          "license": null,
+          "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.1016/j.displa.2026.103412?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1016/j.displa.2026.103412, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+        },
+        "publicationDate": "2026-07-01",
+        "authors": [
+          {
+            "authorId": "2112798203",
+            "name": "Jian Cheng"
+          },
+          {
+            "authorId": "2939003",
+            "name": "Tiansong Li"
+          },
+          {
+            "authorId": "2296832310",
+            "name": "Shaoguo Cui"
+          },
+          {
+            "authorId": "120241018",
+            "name": "Hongkui Wang"
+          },
+          {
+            "authorId": "2271618126",
+            "name": "Li Yu"
+          }
+        ],
+        "abstract": null
+      }
+    },
+    {
+      "citingPaper": {
+        "paperId": "1378f22447bd73c89fdbfbe0699d17722437fead",
+        "externalIds": {
+          "DBLP": "journals/bspc/LiTHLL26",
+          "DOI": "10.1016/j.bspc.2026.110043",
+          "CorpusId": 286248022
+        },
+        "url": "https://www.semanticscholar.org/paper/1378f22447bd73c89fdbfbe0699d17722437fead",
+        "title": "Semantic-geometric dual alignment: A progressive co-optimization paradigm for misaligned multimodal medical image fusion",
+        "venue": "Biomedical Signal Processing and Control",
+        "year": 2026,
+        "citationCount": 0,
+        "openAccessPdf": {
+          "url": "",
+          "status": null,
+          "license": null,
+          "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.1016/j.bspc.2026.110043?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1016/j.bspc.2026.110043, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+        },
+        "publicationDate": "2026-07-01",
+        "authors": [
+          {
+            "authorId": "2333735476",
+            "name": "Yalin Li"
+          },
+          {
+            "authorId": "2261366833",
+            "name": "Mingwei Tang"
+          },
+          {
+            "authorId": "2306394648",
+            "name": "Jie Hu"
+          },
+          {
+            "authorId": "2313583114",
+            "name": "Linxi Li"
+          },
+          {
+            "authorId": "2336550827",
+            "name": "Defu Liu"
+          }
+        ],
+        "abstract": null
+      }
+    },
+    {
+      "citingPaper": {
+        "paperId": "ef2c5ee810dfbf0fc7eec5558e1d952aa0b1ff5f",
+        "externalIds": {
+          "DBLP": "journals/bspc/JuiDABSD26a",
+          "DOI": "10.1016/j.bspc.2026.109934",
+          "CorpusId": 286268096
+        },
+        "url": "https://www.semanticscholar.org/paper/ef2c5ee810dfbf0fc7eec5558e1d952aa0b1ff5f",
+        "title": "Explainable stress detection system using hybrid CNN-Transformer and uncertainty quantification with copula GAN-based data",
+        "venue": "Biomedical Signal Processing and Control",
+        "year": 2026,
+        "citationCount": 1,
+        "openAccessPdf": {
+          "url": "",
+          "status": null,
+          "license": null,
+          "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.1016/j.bspc.2026.109934?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1016/j.bspc.2026.109934, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+        },
+        "publicationDate": "2026-07-01",
+        "authors": [
+          {
+            "authorId": "2153999096",
+            "name": "S. Jui"
+          },
+          {
+            "authorId": "3359894",
+            "name": "R. Deo"
+          },
+          {
+            "authorId": "2260708870",
+            "name": "Rajendra Acharya"
+          },
+          {
+            "authorId": "30691907",
+            "name": "P. Barua"
+          },
+          {
+            "authorId": "2266250646",
+            "name": "Jeffrey Soar"
+          },
+          {
+            "authorId": "2162901616",
+            "name": "Aruna Devi"
+          }
+        ],
+        "abstract": null
+      }
+    }
+  ]
+}

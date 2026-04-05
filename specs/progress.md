@@ -2,7 +2,7 @@
 
 **Project:** lumen
 **Status:** Phase 1 complete
-**Last Updated:** 2026-04-06
+**Last Updated:** 2026-04-07
 
 ## Current Status Overview
 
@@ -27,15 +27,22 @@
   (`_parse_entry`, `search`, `get_by_id`); arXiv Atom fixtures saved to `tests/fixtures/`;
   15 arXiv client tests covering search, get_by_id, parse, retry, circuit-break;
   30 tests total, ruff clean — 2026-04-06
+- Phase 2 session 2: `clients/semantic_scholar.py` implemented (search, get_by_id,
+  get_citations, get_recommendations, _parse_paper); `core/deduplication.py` implemented
+  (DOI, arXiv ID, fuzzy title + author overlap, metadata merge); `core/ranking.py`
+  implemented (relevance, citations, date, impact, combined criteria); `core/cache.py`
+  implemented (SQLite TTL cache, schema versioning, get/set/clean/clear/stats);
+  SS fixtures saved; 80 new tests (15 SS, 24 dedup, 22 ranking, 19 cache);
+  110 tests total, ruff clean — 2026-04-07
 
 ### Active Work
 
 - [x] Pydantic models (`Paper`, `Author`, `SearchResult`) — tested (15 tests)
 - [x] arXiv client (Atom feed via feedparser) — implemented and tested (15 tests)
-- [ ] Semantic Scholar client (REST API, pagination)
-- [ ] Deduplication (DOI, arXiv ID, fuzzy title matching)
-- [ ] Ranking (relevance, citations, date, impact)
-- [ ] SQLite cache with TTL tiers
+- [x] Semantic Scholar client (REST API) — implemented and tested (15 tests)
+- [x] Deduplication (DOI, arXiv ID, fuzzy title + author overlap) — implemented and tested (24 tests)
+- [x] Ranking (relevance, citations, date, impact, combined) — implemented and tested (22 tests)
+- [x] SQLite cache with TTL tiers — implemented and tested (19 tests)
 
 ## Milestone Tracking
 
@@ -43,11 +50,12 @@
 
 - [x] ~~README and project design~~ — 2026-04-05
 - [x] ~~Phase 1: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
+- [x] ~~Phase 2: Core data layer — all clients, dedup, ranking, cache~~ — 2026-04-07
 
 ### Upcoming Milestones
 
 - [x] ~~Phase 1 complete: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
-- [ ] Phase 2 complete: all three API clients + dedup/ranking/cache — target 2026-04-28
+- [x] Phase 2 complete: all three API clients + dedup/ranking/cache — 2026-04-07 (ahead of schedule)
 - [ ] Phase 3 complete: all 11 commands implemented — target 2026-05-26
 - [ ] Phase 4 complete: display layer polished, errors finalized — target 2026-06-09
 - [ ] v0.1.0 release — target 2026-06-23
@@ -65,7 +73,7 @@ _None identified yet._
 
 ### Test Results
 
-- **Unit Tests:** 30 passing (15 models, 15 arXiv client)
+- **Unit Tests:** 110 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache)
 - **Integration Tests:** N/A
 - **Test Coverage:** N/A
 
@@ -98,7 +106,7 @@ _None identified yet._
 
 ### In Progress
 
-- [ ] Phase 2: Core data layer (arXiv ✓ — Semantic Scholar, dedup, ranking, cache remain)
+- [x] Phase 2: Core data layer — complete (110 tests total)
 
 ### Planned
 
