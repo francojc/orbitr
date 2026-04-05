@@ -146,32 +146,35 @@ class SearchResult(BaseModel):
 
 ### Setup
 
+The project uses a **Nix flake** (`flake.nix` + `flake.lock`) to pin the development
+environment and **direnv** to activate it automatically. A **justfile** wraps all
+common tasks.
+
 ```bash
 # Clone and enter the project
 git clone <repo-url> lumen && cd lumen
 
-# Enter Nix dev shell (provides Python 3.12, uv, ruff)
+# direnv activates the flake shell automatically (Python 3.12, uv, ruff, pyright)
+# If direnv is not installed, enter manually:
 nix develop
 
-# Install dependencies and editable package
-uv sync
-uv tool install --editable .
+# Install all dependencies into .venv and register as an editable tool
+just setup
 
 # Verify
 lumen --version
 ```
 
+The `.envrc` contains `use flake .` — this ensures `uv sync` always runs against the
+flake-pinned Python, not whatever Python happens to be on `$PATH`.
+
 ### Build and Run
 
 ```bash
-# Install as a tool (production-style)
-uv tool install .
-
-# Run without installing (development)
-uv run lumen --help
-
-# Build a distributable wheel
-uv build
+just run -- --help        # uv run lumen --help
+just install              # uv tool install . (production-style)
+just install-dev          # uv tool install --editable . (changes take effect immediately)
+just build                # uv build — produces dist/ wheel + sdist
 ```
 
 ### Code Standards
@@ -193,17 +196,11 @@ uv build
 ### Running Tests
 
 ```bash
-# All tests
-uv run pytest
-
-# Unit tests only
-uv run pytest tests/ -m "not integration"
-
-# With coverage report
-uv run pytest --cov=src/lumen --cov-report=term-missing
-
-# Single module
-uv run pytest tests/test_deduplication.py -v
+just test                               # full suite
+just test-unit                          # unit tests only (-m "not integration")
+just cov                                # with coverage report
+just test-mod core/test_deduplication   # single module
+just test-v                             # verbose output
 ```
 
 ### Coverage Targets
@@ -232,10 +229,10 @@ uv run pytest tests/test_deduplication.py -v
 - **Platform:** GitHub Actions
 - **Triggers:** On push to `main`; on pull request; on version tag
 - **Stages:**
-  1. `lint` — `ruff check` and `ruff format --check`
-  2. `typecheck` — `pyright`
-  3. `test` — `pytest` with fixture-based mocks (no live API calls)
-  4. `build` — `uv build`; upload wheel as artifact
+  1. `lint` — `just check` (`ruff format --check` + `ruff check`)
+  2. `typecheck` — `just types` (`pyright src/`)
+  3. `test` — `just test` with fixture-based mocks (no live API calls)
+  4. `build` — `just build` (`uv build`); upload wheel as artifact
   5. `publish` (tag only) — `uv publish` to PyPI
 
 ### Release Process

@@ -18,31 +18,44 @@ CLI pipeline: command dispatch → concurrent async API clients → core process
 - `src/lumen/zotero/client.py` — pyzotero wrapper
 - `src/lumen/display/` — `table.py`, `list.py`, `detail.py`, `json_fmt.py`
 
+## Dev Environment
+
+The project uses a **Nix flake** to pin the dev environment (Python 3.12, uv, ruff,
+pyright) and **direnv** to activate it automatically on `cd`. A **justfile** provides
+all common workflow recipes.
+
+Entry point:
+
+```bash
+cd lumen          # direnv runs `use flake .` — activates pinned shell
+just setup        # uv sync inside the flake environment
+```
+
+Without direnv: `nix develop` then `just setup`.
+
 ## Build, Test, and Run
 
 ```bash
-# Dev install
-uv sync
-uv tool install --editable .
+just setup        # uv sync — install deps and editable package
+just run -- --help           # run lumen via uv run
+just build        # uv build — produces dist/ wheel + sdist
 
-# Run without installing
-uv run lumen --help
+just fmt          # ruff format src/ tests/
+just lint         # ruff check --fix src/ tests/
+just check        # fmt + lint, no writes (use in CI)
+just types        # pyright src/
+just qa           # check + types
 
-# Build wheel
-uv build
+just test         # pytest — full suite
+just test-unit    # pytest -m "not integration"
+just cov          # pytest --cov with term-missing report
+just test-mod core/test_deduplication  # single module
 
-# Lint and format
-ruff check src/ tests/
-ruff format src/ tests/
-
-# Type check
-pyright src/
-
-# Tests
-uv run pytest                                          # all tests
-uv run pytest tests/ -m "not integration"             # unit only
-uv run pytest --cov=src/lumen --cov-report=term-missing  # with coverage
+just clean        # remove build artifacts and caches
+just reset        # wipe .venv and reinstall from scratch
 ```
+
+Run `just` with no arguments to list all recipes.
 
 ## Language and Stack
 
@@ -77,6 +90,7 @@ lumen/
 - All commands must have complete `--help` text with a usage example before merging
 - Errors go to stderr; data goes to stdout — enforce at every command boundary
 - All new commands: add entry to `cli.py`, stub in `commands/`, unit test in `tests/test_<command>.py`
+- Run `just check` before committing; run `just qa` before opening a PR
 - Check `specs/planning.md` for the current phase and open tasks
 - Update `specs/progress.md` after completing a milestone or feature
 

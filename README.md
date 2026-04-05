@@ -46,6 +46,40 @@ Verify the install:
 lumen --version
 ```
 
+### Development setup
+
+`lumen` uses a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html) to pin the development environment (Python 3.12, uv, ruff, pyright) and [`just`](https://just.systems) as a task runner.
+
+**Prerequisites:** Nix with flakes enabled, direnv, just.
+
+```bash
+git clone <repo-url> lumen
+cd lumen                  # direnv activates the flake shell automatically
+just setup                # uv sync inside the pinned environment
+just run -- --help        # verify
+```
+
+If direnv is not installed, enter the shell manually:
+
+```bash
+nix develop
+just setup
+```
+
+**Common tasks:**
+
+```bash
+just test        # run the full test suite
+just cov         # test with coverage report
+just check       # lint + format check (CI-safe, no writes)
+just qa          # check + type check
+just fmt         # auto-format source files
+just doctor      # verify credentials and API connectivity
+just run -- search "transformers"  # run lumen directly
+```
+
+Run `just` with no arguments to list all available recipes.
+
 ### API credentials
 
 `lumen` works out of the box with no credentials. Providing them unlocks higher rate limits and Zotero integration.
