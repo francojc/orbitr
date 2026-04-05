@@ -2,15 +2,15 @@
 
 **Project:** lumen
 **Status:** Phase 1 complete
-**Last Updated:** 2026-04-07
+**Last Updated:** 2026-04-05
 
 ## Current Status Overview
 
 ### Development Phase
 
 - **Current Phase:** Phase 3 — Command Implementation
-- **Phase Progress:** Phase 2 100% complete
-- **Overall Project Progress:** ~30% complete
+- **Phase Progress:** Phase 3 in progress (1 of 11 commands complete)
+- **Overall Project Progress:** ~35% complete
 
 ### Recent Accomplishments
 
@@ -34,6 +34,13 @@
   implemented (SQLite TTL cache, schema versioning, get/set/clean/clear/stats);
   SS fixtures saved; 80 new tests (15 SS, 24 dedup, 22 ranking, 19 cache);
   110 tests total, ruff clean — 2026-04-07
+- Phase 3 session 1: `core/query.py` added (field-filter parsing, per-source query
+  builders, year-range helpers, cache-key utility); `display/` layer implemented
+  (`json_fmt.py` ndjson, `table.py` Rich Table, `list.py` Rich Panels, `__init__.py`
+  unified `render()` dispatcher); `commands/search.py` fully wired — concurrent
+  async gather across arXiv + SS, cache read/write, dedup, rank, display, full
+  error handling; 25 new integration tests covering all branches;
+  135 tests total, ruff clean — 2026-04-05
 
 ### Active Work
 
@@ -43,6 +50,9 @@
 - [x] Deduplication (DOI, arXiv ID, fuzzy title + author overlap) — implemented and tested (24 tests)
 - [x] Ranking (relevance, citations, date, impact, combined) — implemented and tested (22 tests)
 - [x] SQLite cache with TTL tiers — implemented and tested (19 tests)
+- [x] `core/query.py` — field-filter parsing, per-source query builders, cache key (phase 3)
+- [x] `display/` layer — `json_fmt`, `table`, `list`, unified `render()` dispatcher (phase 3)
+- [x] `lumen search` — full pipeline: concurrent fetch, cache, dedup, rank, display (phase 3)
 
 ## Milestone Tracking
 
@@ -51,11 +61,12 @@
 - [x] ~~README and project design~~ — 2026-04-05
 - [x] ~~Phase 1: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
 - [x] ~~Phase 2: Core data layer — all clients, dedup, ranking, cache~~ — 2026-04-07
+- [x] ~~Phase 3 session 1: `lumen search` implemented~~ — 2026-04-05
 
 ### Upcoming Milestones
 
 - [x] ~~Phase 1 complete: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
-- [x] Phase 2 complete: all three API clients + dedup/ranking/cache — 2026-04-07 (ahead of schedule)
+- [x] ~~Phase 2 complete: all three API clients + dedup/ranking/cache~~ — 2026-04-07
 - [ ] Phase 3 complete: all 11 commands implemented — target 2026-05-26
 - [ ] Phase 4 complete: display layer polished, errors finalized — target 2026-06-09
 - [ ] v0.1.0 release — target 2026-06-23
@@ -68,12 +79,12 @@ _None identified yet._
 
 ### Build Health
 
-- **Last Successful Build:** 2026-04-07 (`uv run pytest` — 110 tests, ruff clean)
+- **Last Successful Build:** 2026-04-05 (`uv run pytest` — 135 tests, ruff clean)
 - **Build Warnings:** None
 
 ### Test Results
 
-- **Unit Tests:** 110 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache)
+- **Unit Tests:** 135 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache, 25 search)
 - **Integration Tests:** N/A
 - **Test Coverage:** N/A
 
@@ -113,11 +124,12 @@ _None identified yet._
 
 ### In Progress
 
-_None — beginning Phase 3._
+- `lumen paper` — Phase 3 (next)
+- `lumen cite` — Phase 3
 
 ### Planned
 
-- [ ] `lumen search` — Phase 3
+- [x] `lumen search` — Phase 3 ✓
 - [ ] `lumen paper` — Phase 3
 - [ ] `lumen cite` — Phase 3
 - [ ] `lumen author` — Phase 3
@@ -178,7 +190,7 @@ _None yet._
 
 ### Immediate Actions (Next 2 Weeks)
 
-- [ ] Implement `lumen search` — wire arXiv + SS clients, dedup, rank, cache, display
+- [x] Implement `lumen search` — complete (135 tests, ruff clean)
 - [ ] Implement `lumen paper` — fetch by arXiv/SS ID
 - [ ] Implement `lumen cite` — SS citations endpoint
 - [ ] Implement `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py`
