@@ -1,8 +1,8 @@
 # Development Implementation Details
 
 **Project:** lumen
-**Status:** Planning
-**Last Updated:** 2026-04-05
+**Status:** Phase 2 complete
+**Last Updated:** 2026-04-07
 
 ## Architecture
 
@@ -60,14 +60,19 @@ lumen/
 │           └── json_fmt.py      # JSON serializer (newline-delimited)
 └── tests/
     ├── conftest.py
-    ├── fixtures/            # Recorded API responses for mocking
-    ├── test_search.py
-    ├── test_paper.py
-    ├── test_deduplication.py
-    ├── test_ranking.py
-    ├── test_cache.py
-    ├── test_export.py
-    └── test_zotero.py
+    ├── fixtures/                    # Recorded API responses for offline testing
+    │   ├── arxiv_search.xml
+    │   ├── arxiv_get_by_id.xml
+    │   ├── ss_search.json
+    │   ├── ss_get_by_id.json
+    │   ├── ss_citations.json
+    │   └── ss_recommendations.json
+    ├── test_models.py               # Paper, Author, SearchResult (15 tests)
+    ├── test_arxiv.py                # ArxivClient (15 tests)
+    ├── test_semantic_scholar.py     # SemanticScholarClient (15 tests)
+    ├── test_deduplication.py        # deduplicate, _merge, helpers (24 tests)
+    ├── test_ranking.py              # rank, scoring functions (22 tests)
+    └── test_cache.py                # Cache get/set/clean/clear/stats (19 tests)
 ```
 
 ### Key Modules
@@ -86,21 +91,47 @@ lumen/
    - **Purpose:** Abstract base providing retry logic (exponential backoff on 429/503), per-source rate limiting, and circuit breaking; all source clients extend this
    - **Public Interface:** `BaseClient`, `async search(query, max_results) -> SearchResult`, `async get_by_id(id) -> Paper`
    - **Dependencies:** `httpx`, `asyncio`
+   - **Retry policy:** 3 attempts; backoff 1 s, 2 s, 4 s on 429/503; circuit flag set after network failure
 
-4. **`core/deduplication.py`**
-   - **Purpose:** Merges result sets from multiple sources; removes duplicates by exact DOI, exact arXiv ID, then fuzzy title + author overlap (≥ 85% similarity threshold)
-   - **Public Interface:** `deduplicate(papers: list[Paper], threshold=0.85) -> list[Paper]`
-   - **Dependencies:** `core/models.py`; optional `rapidfuzz` for fast string similarity
+4. **`clients/arxiv.py`** *(Phase 2 — complete)*
+   - **Purpose:** Fetches arXiv Atom feed via `feedparser`; parses entries into `Paper` models
+   - **Public Interface:** `ArxivClient.search(query, max_results) -> SearchResult`, `get_by_id(paper_id) -> Paper`
+   - **Field mapping:** `entry.id` → `arxiv_id` (URL stripped, version stripped); `entry.authors` → `Author` list; `entry.tags[].term` → `categories`; PDF link via `links[type=application/pdf]`
+   - **ID parsing:** `_parse_arxiv_id()` handles bare IDs, `abs/` prefix, full HTTPS URLs, and versioned suffixes
+   - **Dependencies:** `feedparser`, `clients/base.py`
 
-5. **`core/ranking.py`**
-   - **Purpose:** Scores and sorts papers by one of: `relevance` (TF-IDF query match), `citations` (log-scaled count), `date` (recency), `impact` (citations × recency), `combined` (weighted composite)
+5. **`clients/semantic_scholar.py`** *(Phase 2 — complete)*
+   - **Purpose:** Queries the Semantic Scholar Graph API v1 (REST/JSON)
+   - **Public Interface:** `search`, `get_by_id`, `get_citations`, `get_recommendations`, `_parse_paper`
+   - **Field mapping:** `externalIds.ArXiv` → `arxiv_id`; `externalIds.DOI` → `doi`; `openAccessPdf.url` → `pdf_url`; `publicationDate` (ISO string) → `published_date`; falls back to `year` (int) when `publicationDate` is absent
+   - **Auth:** `x-api-key` header injected when `api_key` is set
+   - **Citations endpoint:** `/paper/{id}/citations` — wraps `citingPaper` key from each result item
+   - **Recommendations endpoint:** `/recommendations/v1/papers/forpaper/{id}`
+   - **Dependencies:** `httpx`, `clients/base.py`
+
+6. **`core/deduplication.py`** *(Phase 2 — complete)*
+   - **Purpose:** Merges result sets from multiple sources using a three-stage matching pipeline
+   - **Public Interface:** `deduplicate(papers, threshold=0.85) -> list[Paper]`
+   - **Match priority:** (1) exact DOI → (2) exact arXiv ID → (3) fuzzy title (`rapidfuzz.fuzz.token_sort_ratio` ≥ 85%) + author surname overlap
+   - **Author overlap:** surname-set intersection; falls back to `True` (assume match) when either paper has no authors
+   - **Merge policy:** richer author list wins; `None` fields filled from duplicate; citation counts take the maximum; categories merged without duplication
+   - **Dependencies:** `core/models.py`; `rapidfuzz` (optional — Jaccard fallback if absent)
+
+7. **`core/ranking.py`** *(Phase 2 — complete)*
+   - **Purpose:** Sorts papers by a named criterion
    - **Public Interface:** `rank(papers, criterion, query=None) -> list[Paper]`
-   - **Dependencies:** `core/models.py`
+   - **Criteria:** `relevance` (TF-IDF term frequency; title weighted 3×, abstract 1×); `citations` (`math.log1p` of count); `date` (normalised recency since 1990-01-01); `impact` (citations × date); `combined` (relevance 40%, citations 35%, date 25%)
+   - **Fallback:** `relevance` without a query degrades to `date`
+   - **Dependencies:** `core/models.py`, `math`, `datetime`
 
-6. **`core/cache.py`**
-   - **Purpose:** SQLite-backed TTL cache with three independent tiers (search: 1 h, paper: 24 h, citations: 6 h); keyed by normalized query + source hash
-   - **Public Interface:** `Cache`, `get(key) -> T | None`, `set(key, value, tier)`, `stats() -> CacheStats`, `clean()`, `clear()`
-   - **Dependencies:** `sqlite3` (stdlib)
+8. **`core/cache.py`** *(Phase 2 — complete)*
+   - **Purpose:** SQLite-backed TTL key-value store with three independent tiers
+   - **Public Interface:** `Cache(db_path)`, `get(key, tier)`, `set(key, value, tier)`, `clean(tier)`, `clear(tier)`, `stats() -> CacheStats`
+   - **Tiers and TTLs:** `search` 3600 s · `paper` 86400 s · `citations` 21600 s
+   - **Schema versioning:** `meta` table stores `schema_version`; mismatch triggers silent wipe and rebuild
+   - **Storage:** values serialised with `json.dumps`; `expires_at` stored as Unix float
+   - **Location:** `~/.cache/lumen/cache.db` (XDG); overridable via `db_path` constructor arg
+   - **Dependencies:** `sqlite3` (stdlib), `json`, `time`
 
 7. **`display/`**
    - **Purpose:** Renders `list[Paper]` or `Paper` into Rich output or JSON; auto-detects TTY for format and pager; respects `NO_COLOR`
@@ -309,3 +340,8 @@ except SourceError as e:
 | 2026-04-05 | `asyncio.run()` per command | Keeps Typer's sync model simple; avoids running a persistent event loop; acceptable for CLI latency | Single shared event loop (complex lifecycle), trio (different ecosystem) |
 | 2026-04-05 | Async strategy: `asyncio.run()` per command (Option A) | Typer is sync; wrapping async impl functions with `asyncio.run()` is explicit, testable, and zero-cost for a CLI. Event loop created and torn down per invocation. `httpx.AsyncClient` scoped inside each async impl via context manager. Enables `asyncio.gather()` for concurrent multi-source queries. | anyio + Typer async (experimental), sync client wrappers hiding async (prevents concurrent queries) |
 | 2026-04-05 | Defer Google Scholar to v1.1 | Web scraping is inherently fragile and raises maintenance burden disproportionate to value at launch; arXiv + Semantic Scholar cover the core use case | Include as best-effort (sets wrong expectations), include fully (too brittle) |
+| 2026-04-06 | Use `rapidfuzz` for fuzzy title matching | 10–20× faster than pure-Python Jaccard; `token_sort_ratio` handles word-order variation across sources (e.g. "Attention Is All You Need" vs. "Attention is All you Need") | `difflib.SequenceMatcher` (slower, no token sorting), exact match only (too brittle) |
+| 2026-04-06 | Dedup match priority: DOI → arXiv ID → fuzzy+author | Exact identifiers are zero false-positive; fuzzy is a last resort gated by author overlap to prevent cross-paper collisions | Fuzzy-only (false positives on similarly-titled papers), ID-only (misses cross-source matches without shared IDs) |
+| 2026-04-06 | Merge keeps richer author list, not winner-by-source | arXiv entries often have full author lists; SS may truncate; source-agnostic richness heuristic is more robust than a fixed source preference | Always prefer arXiv, always prefer SS |
+| 2026-04-06 | Ranking `combined` weights: relevance 40%, citations 35%, date 25% | Balances recency and impact without letting high-citation classic papers dominate fresh results; weights tunable in a future config option | Equal weights (flattens signal), citation-only (biases to classics) |
+| 2026-04-07 | Cache schema versioning via `meta` table | Single-table version check enables silent wipe on mismatch without user intervention; SQLite file stays self-describing | Version in filename (complicates path resolution), no versioning (silent corruption) |

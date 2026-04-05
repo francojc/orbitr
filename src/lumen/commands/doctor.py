@@ -61,8 +61,8 @@ def doctor(ctx: typer.Context) -> None:
     config = load_config(path=config_path)
 
     table = Table(title="lumen doctor", show_header=True, header_style="bold")
-    table.add_column("Check", style="dim")
-    table.add_column("Status")
+    table.add_column("Check", style="dim", min_width=26)
+    table.add_column("Status", min_width=13)
     table.add_column("Detail")
 
     any_fail = False

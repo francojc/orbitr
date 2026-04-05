@@ -8,9 +8,9 @@
 
 ### Development Phase
 
-- **Current Phase:** Phase 2 — Core Data Layer
-- **Phase Progress:** Phase 1 100% complete
-- **Overall Project Progress:** ~15% complete
+- **Current Phase:** Phase 3 — Command Implementation
+- **Phase Progress:** Phase 2 100% complete
+- **Overall Project Progress:** ~30% complete
 
 ### Recent Accomplishments
 
@@ -68,7 +68,7 @@ _None identified yet._
 
 ### Build Health
 
-- **Last Successful Build:** 2026-04-05 (`uv sync` — 41 packages, clean install)
+- **Last Successful Build:** 2026-04-07 (`uv run pytest` — 110 tests, ruff clean)
 - **Build Warnings:** None
 
 ### Test Results
@@ -103,10 +103,17 @@ _None identified yet._
 - [x] Stub skeletons for `clients/`, `core/`, `display/`, `zotero/`
 - [x] `tests/conftest.py` with basic fixtures
 - [x] ruff lint + format passing clean
+- [x] `clients/arxiv.py` — Atom feed search + get_by_id, feedparser field mapping, ID normalisation
+- [x] `clients/semantic_scholar.py` — REST search, get_by_id, citations, recommendations, API key support
+- [x] `core/deduplication.py` — DOI/arXiv ID exact match + rapidfuzz fuzzy title + author overlap + metadata merge
+- [x] `core/ranking.py` — relevance, citations, date, impact, combined criteria; TF-IDF relevance scorer
+- [x] `core/cache.py` — SQLite TTL cache, 3 tiers, schema versioning, get/set/clean/clear/stats
+- [x] `tests/fixtures/` — recorded arXiv XML and Semantic Scholar JSON responses for offline testing
+- [x] 110 tests total (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache), ruff clean
 
 ### In Progress
 
-- [x] Phase 2: Core data layer — complete (110 tests total)
+_None — beginning Phase 3._
 
 ### Planned
 
@@ -132,7 +139,9 @@ _Nothing deferred yet._
 
 ### Known Debt
 
-_None accumulated yet — project not started._
+- `test_cache.py` imports `_TTL` and `CacheStats` that are unused (ruff auto-fixed); no functional debt
+- SS `get_recommendations` fixture returned 0 results (API behaviour without key); test only asserts type, not content
+- No test coverage measurement yet — `pytest-cov` not yet run against Phase 2 modules
 
 ## Dependency Status
 
@@ -140,15 +149,16 @@ _None accumulated yet — project not started._
 
 | Package | Version | Status |
 |---|---|---|
-| `typer` | latest stable | Planned |
-| `rich` | latest stable | Planned |
-| `httpx` | latest stable | Planned |
-| `pydantic` | ≥ 2.0 | Planned |
-| `pyzotero` | latest stable | Planned |
-| `feedparser` | latest stable | Planned |
-| `python-dateutil` | latest stable | Planned |
-| `beautifulsoup4` | latest stable | Planned |
-| `python-dotenv` | latest stable | Planned |
+| `typer` | latest stable | ✓ installed |
+| `rich` | latest stable | ✓ installed |
+| `httpx` | latest stable | ✓ installed |
+| `pydantic` | ≥ 2.0 | ✓ installed |
+| `feedparser` | latest stable | ✓ installed |
+| `rapidfuzz` | latest stable | ✓ installed |
+| `pyzotero` | latest stable | ✓ installed (unused until Phase 3) |
+| `python-dateutil` | latest stable | ✓ installed |
+| `beautifulsoup4` | latest stable | ✓ installed (unused until Phase 3) |
+| `python-dotenv` | latest stable | ✓ installed |
 
 ## Challenges and Blockers
 
@@ -168,18 +178,18 @@ _None yet._
 
 ### Immediate Actions (Next 2 Weeks)
 
-- [ ] Create `pyproject.toml` with Hatchling build backend and all dependencies declared
-- [ ] Initialize git repo and push to GitHub
-- [ ] Create `src/lumen/` package skeleton: `cli.py`, `config.py`, stub `commands/`
-- [ ] Implement global flag handling (`--version`, `--verbose`, `--quiet`, `--no-color`, `--config`)
-- [ ] Implement config file loading with XDG path defaults
+- [ ] Implement `lumen search` — wire arXiv + SS clients, dedup, rank, cache, display
+- [ ] Implement `lumen paper` — fetch by arXiv/SS ID
+- [ ] Implement `lumen cite` — SS citations endpoint
+- [ ] Implement `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py`
+- [ ] Add CLI integration tests (Typer `CliRunner`) for each implemented command
 
 ### Medium-term Goals (Next Month)
 
-- [ ] All three API clients implemented with basic search working
-- [ ] Deduplication and ranking operational
-- [ ] SQLite cache layer in place
-- [ ] `lumen search` end-to-end for at least arXiv + Semantic Scholar
+- [ ] All 11 commands implemented and passing integration tests
+- [ ] `lumen search` end-to-end with multi-source dedup + ranking verified
+- [ ] `lumen export` producing valid BibTeX and RIS output
+- [ ] `lumen zotero add` functional with real credentials
 
 ### Decisions Needed
 
