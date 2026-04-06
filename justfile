@@ -84,6 +84,19 @@ build:
 publish:
   uv publish
 
+# Tag and create a GitHub Release (triggers CI publish to PyPI)
+# Usage: just release
+release:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  version=$(grep '^version' pyproject.toml | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+  tag="v${version}"
+  echo "Releasing ${tag}..."
+  git tag "${tag}"
+  git push origin "${tag}"
+  gh release create "${tag}" --title "${tag}" --generate-notes
+  echo "Done — CI will publish to PyPI automatically."
+
 # ── Nix ────────────────────────────────────────────────────────────────────────
 
 # Update flake.lock to latest nixpkgs
