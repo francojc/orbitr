@@ -249,3 +249,45 @@ class TestDeduplicate:
         ]
         result = deduplicate(papers)
         assert [p.title for p in result] == ["Alpha Paper", "Beta Paper", "Gamma Paper"]
+
+
+class TestTitleSimilarityFallback:
+    """Cover the rapidfuzz ImportError fallback branch in _title_similarity."""
+
+    def _call_fallback(self, a: str, b: str) -> float:
+        """Call _title_similarity with rapidfuzz hidden in sys.modules."""
+        import sys
+
+        original = sys.modules.get("rapidfuzz", "_sentinel")
+        sys.modules["rapidfuzz"] = None  # type: ignore[assignment]
+        try:
+            # Re-import after hiding rapidfuzz so the except ImportError path fires.
+            import importlib
+
+            import lumen.core.deduplication as dedup_mod
+
+            importlib.reload(dedup_mod)
+            return dedup_mod._title_similarity(a, b)
+        finally:
+            if original == "_sentinel":
+                sys.modules.pop("rapidfuzz", None)
+            else:
+                sys.modules["rapidfuzz"] = original  # type: ignore[assignment]
+            # Reload once more to restore rapidfuzz for subsequent tests.
+            import importlib
+
+            import lumen.core.deduplication
+
+            importlib.reload(lumen.core.deduplication)
+
+    def test_fallback_identical_titles(self) -> None:
+        score = self._call_fallback("word for word", "word for word")
+        assert score == 1.0
+
+    def test_fallback_disjoint_titles(self) -> None:
+        score = self._call_fallback("alpha beta", "gamma delta")
+        assert score == 0.0
+
+    def test_fallback_empty_title(self) -> None:
+        score = self._call_fallback("", "something")
+        assert score == 0.0

@@ -80,18 +80,21 @@ def export(
         except SourceError as exc:
             _err.print(f"[red]Error:[/red] {exc.message}")
             if exc.suggestion:
-                _err.print(exc.suggestion)
+                _err.print(f"[dim]{exc.suggestion}[/dim]")
             raise typer.Exit(code=1) from exc
         except LumenError as exc:
             _err.print(f"[red]Error:[/red] {exc.message}")
+            if exc.suggestion:
+                _err.print(f"[dim]{exc.suggestion}[/dim]")
             raise typer.Exit(code=1) from exc
         return
 
     # Read ndjson from stdin
     if sys.stdin.isatty():
+        _err.print("[red]Error:[/red] No input provided.")
         _err.print(
-            "[red]Error:[/red] No input. "
-            "Pipe from `lumen search --format json` or use --query."
+            "[dim]Pipe results with `lumen search 'query' --format json | lumen export`, "
+            "or run a search with `--query 'keywords'`.[/dim]"
         )
         raise typer.Exit(code=2)
 
@@ -108,7 +111,8 @@ def export(
     if not papers:
         if not cfg.quiet:
             Console(no_color=cfg.no_color).print(
-                "[yellow]No papers found in input.[/yellow]"
+                "[yellow]No papers found in input.[/yellow] "
+                "[dim]Check that the piped data contains valid lumen JSON.[/dim]"
             )
         raise typer.Exit(code=4)
 

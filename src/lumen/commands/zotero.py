@@ -238,6 +238,9 @@ def zotero_new(
             parent_key = zot.find_collection_key(parent)
             if parent_key is None:
                 _err.print(f"[red]Error:[/red] Parent collection '{parent}' not found.")
+                _err.print(
+                    "[dim]Run `lumen zotero collections` to list available collections.[/dim]"
+                )
                 raise typer.Exit(code=1)
 
         resp = zot.create_collection(name, parent_key=parent_key)
@@ -254,8 +257,10 @@ def zotero_new(
     except ConfigError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
         if exc.suggestion:
-            _err.print(exc.suggestion)
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=3) from exc
     except LumenError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc

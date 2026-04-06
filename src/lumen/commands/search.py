@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import sys
 from typing import Annotated
 
 import typer
@@ -26,7 +27,7 @@ from lumen.core.query import (
     ss_year_param,
 )
 from lumen.core.ranking import rank
-from lumen.display import render
+from lumen.display import effective_format, render
 from lumen.exceptions import LumenError, NoResultsError, SourceError, UsageError
 
 logger = logging.getLogger(__name__)
@@ -118,8 +119,8 @@ def search(
         )
         raise typer.Exit(code=2)
 
-    # Validate --format
-    effective_fmt = fmt or cfg.format
+    # Validate --format (TTY detection: non-TTY stdout auto-switches to json)
+    effective_fmt = effective_format(fmt, cfg.format)
     if effective_fmt not in VALID_FORMATS:
         _err.print(
             f"[red]Error:[/red] Unknown format {effective_fmt!r}. "
@@ -165,19 +166,22 @@ def search(
     except SourceError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
         if exc.suggestion:
-            _err.print(exc.suggestion)
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
     except UsageError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
         if exc.suggestion:
-            _err.print(exc.suggestion)
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=2) from exc
     except LumenError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
 
     console = Console(no_color=cfg.no_color)
-    render(papers, fmt=effective_fmt, console=console)  # type: ignore[arg-type]
+    pager = sys.stdout.isatty() and not cfg.no_pager
+    render(papers, fmt=effective_fmt, console=console, pager=pager)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------

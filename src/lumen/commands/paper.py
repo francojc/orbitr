@@ -16,7 +16,7 @@ from lumen.clients.semantic_scholar import SemanticScholarClient
 from lumen.config import VALID_FORMATS
 from lumen.core.cache import Cache
 from lumen.core.models import Paper
-from lumen.display import render
+from lumen.display import effective_format, render
 from lumen.exceptions import LumenError, NoResultsError, SourceError
 
 logger = logging.getLogger(__name__)
@@ -131,11 +131,11 @@ def paper(
       lumen paper 1706.03762 --format json
     """
     cfg = ctx.obj.config
-    effective_fmt = fmt or cfg.format
+    effective_fmt = effective_format(fmt, cfg.format)
 
     if effective_fmt not in VALID_FORMATS:
         _err.print(
-            f"[red]Error:[/red] Invalid format {effective_fmt!r}. "
+            f"[red]Error:[/red] Unknown format {effective_fmt!r}. "
             f"Choose: {', '.join(VALID_FORMATS)}"
         )
         raise typer.Exit(code=2)
@@ -158,10 +158,12 @@ def paper(
     except SourceError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
         if exc.suggestion:
-            _err.print(exc.suggestion)
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
     except LumenError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
 
 
@@ -202,13 +204,16 @@ async def fetch_paper(paper_id: str, *, cfg, no_cache: bool = False) -> Paper:
 
 async def _paper_async(*, paper_id: str, fmt: str, no_cache: bool, cfg) -> None:
     """Fetch a single paper by ID and render it."""
+    import sys
+
     try:
         result = await fetch_paper(paper_id, cfg=cfg, no_cache=no_cache)
     except SourceError:
         raise
 
     console = Console(no_color=cfg.no_color)
-    render([result], fmt=fmt, console=console)
+    pager = sys.stdout.isatty() and not cfg.no_pager
+    render([result], fmt=fmt, console=console, pager=pager)
 
 
 # ---------------------------------------------------------------------------
@@ -253,11 +258,11 @@ def cite(
       lumen cite 1706.03762 --limit 50 --format json
     """
     cfg = ctx.obj.config
-    effective_fmt = fmt or cfg.format
+    effective_fmt = effective_format(fmt, cfg.format)
 
     if effective_fmt not in VALID_FORMATS:
         _err.print(
-            f"[red]Error:[/red] Invalid format {effective_fmt!r}. "
+            f"[red]Error:[/red] Unknown format {effective_fmt!r}. "
             f"Choose: {', '.join(VALID_FORMATS)}"
         )
         raise typer.Exit(code=2)
@@ -281,10 +286,12 @@ def cite(
     except SourceError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
         if exc.suggestion:
-            _err.print(exc.suggestion)
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
     except LumenError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
 
 
@@ -308,8 +315,11 @@ async def _cite_async(
                         f"No citations found for '{paper_id}'.",
                         suggestion="Try a different ID or check the paper exists on Semantic Scholar.",
                     )
+                import sys
+
                 console = Console(no_color=cfg.no_color)
-                render(papers, fmt=fmt, console=console)
+                pager = sys.stdout.isatty() and not cfg.no_pager
+                render(papers, fmt=fmt, console=console, pager=pager)
                 return
             except NoResultsError:
                 raise
@@ -333,5 +343,8 @@ async def _cite_async(
             suggestion="Try a different ID or check the paper exists on Semantic Scholar.",
         )
 
+    import sys
+
     console = Console(no_color=cfg.no_color)
-    render(papers[:limit], fmt=fmt, console=console)
+    pager = sys.stdout.isatty() and not cfg.no_pager
+    render(papers[:limit], fmt=fmt, console=console, pager=pager)
