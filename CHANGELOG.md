@@ -82,6 +82,27 @@ Initial release.
 
 ---
 
+## [0.1.1] — 2026-04-06
+
+### Fixed
+
+- **`lumen init` — env-var credential protection** (`commands/init.py`, `config.py`):
+  - Credentials supplied via `SEMANTIC_SCHOLAR_API_KEY`, `ZOTERO_USER_ID`, or
+    `ZOTERO_API_KEY` environment variables are now detected at init time.
+  - A clear dim note is shown for each active env var: *"Already set via
+    ENV_VAR — leave blank to keep using the env var."*
+  - Prompts for env-var-sourced credentials default to blank instead of
+    pre-filling with the resolved (env) value, preventing accidental plain-text
+    exposure in `config.toml`.
+  - If the user leaves a credential blank and an env var is active, the
+    existing `config.toml` value for that field is preserved rather than
+    overwritten with an empty string.
+  - Entering a new value at the prompt always writes it to `config.toml`,
+    regardless of whether an env var is also set.
+  - Config loading (`load_config`) was already correct (env vars take
+    precedence over `config.toml` at runtime); this fix closes the init-time
+    loophole.
+
 ## Unreleased
 
 _Nothing yet._

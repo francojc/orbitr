@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import os
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
 from lumen.config import CONFIG_FILE, Credentials, write_config
+
+# Names of the environment variables that supply credentials.
+_ENV_SS_KEY = "SEMANTIC_SCHOLAR_API_KEY"
+_ENV_ZOTERO_USER = "ZOTERO_USER_ID"
+_ENV_ZOTERO_KEY = "ZOTERO_API_KEY"
 
 console = Console()
 
@@ -38,27 +45,53 @@ def init(ctx: typer.Context) -> None:
 
     console.print("\n[bold]Semantic Scholar[/bold]")
     console.print("An API key is optional but increases your rate limit.")
-    console.print("Get one at: https://www.semanticscholar.org/product/api\n")
+    console.print("Get one at: https://www.semanticscholar.org/product/api")
 
+    ss_from_env = bool(os.environ.get(_ENV_SS_KEY))
+    if ss_from_env:
+        console.print(
+            f"\n[dim]Already set via [bold]{_ENV_SS_KEY}[/bold] env var.[/dim]"
+        )
+        console.print(
+            "[dim]Leave blank to keep using the env var "
+            "(value will not be written to config.toml).[/dim]"
+        )
     ss_key = Prompt.ask(
-        "Semantic Scholar API key",
-        default=config.credentials.semantic_scholar_api_key or "",
+        "\nSemantic Scholar API key",
+        default="" if ss_from_env else (config.credentials.semantic_scholar_api_key or ""),
         password=True,
     )
 
     console.print("\n[bold]Zotero[/bold]")
     console.print("Required for `lumen zotero` commands.")
     console.print(
-        "Find your User ID and API key at: https://www.zotero.org/settings/keys\n"
+        "Find your User ID and API key at: https://www.zotero.org/settings/keys"
     )
 
+    zotero_user_from_env = bool(os.environ.get(_ENV_ZOTERO_USER))
+    zotero_key_from_env = bool(os.environ.get(_ENV_ZOTERO_KEY))
+    if zotero_user_from_env or zotero_key_from_env:
+        vars_active = ", ".join(
+            v for v, active in [
+                (_ENV_ZOTERO_USER, zotero_user_from_env),
+                (_ENV_ZOTERO_KEY, zotero_key_from_env),
+            ] if active
+        )
+        console.print(
+            f"\n[dim]Already set via [bold]{vars_active}[/bold] env var(s).[/dim]"
+        )
+        console.print(
+            "[dim]Leave blank to keep using the env var(s) "
+            "(values will not be written to config.toml).[/dim]"
+        )
+
     zotero_user_id = Prompt.ask(
-        "Zotero User ID",
-        default=config.credentials.zotero_user_id or "",
+        "\nZotero User ID",
+        default="" if zotero_user_from_env else (config.credentials.zotero_user_id or ""),
     )
     zotero_api_key = Prompt.ask(
         "Zotero API key",
-        default=config.credentials.zotero_api_key or "",
+        default="" if zotero_key_from_env else (config.credentials.zotero_api_key or ""),
         password=True,
     )
 
@@ -80,10 +113,30 @@ def init(ctx: typer.Context) -> None:
         console.print("[yellow]Aborted — no changes written.[/yellow]")
         raise typer.Exit()
 
+    # For each credential: if the user left the prompt blank AND an env var is
+    # active, preserve whatever value was already in config.toml rather than
+    # overwriting it with an empty string.  The env var will continue to take
+    # precedence at runtime regardless.
+    from lumen.config import _load_toml  # avoid circular at module level
+
+    existing_creds = _load_toml(CONFIG_FILE).get("credentials", {})
+
     config.credentials = Credentials(
-        semantic_scholar_api_key=ss_key,
-        zotero_user_id=zotero_user_id,
-        zotero_api_key=zotero_api_key,
+        semantic_scholar_api_key=(
+            ss_key
+            if ss_key
+            else existing_creds.get("semantic_scholar_api_key", "")
+        ),
+        zotero_user_id=(
+            zotero_user_id
+            if zotero_user_id
+            else existing_creds.get("zotero_user_id", "")
+        ),
+        zotero_api_key=(
+            zotero_api_key
+            if zotero_api_key
+            else existing_creds.get("zotero_api_key", "")
+        ),
     )
     config.max_results = int(max_results)
     config.format = fmt

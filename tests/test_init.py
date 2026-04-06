@@ -205,3 +205,134 @@ class TestInitRerun:
 
         assert written_config is not None
         assert written_config.credentials.semantic_scholar_api_key == "existing-key"
+
+
+# ---------------------------------------------------------------------------
+# Env-var credential handling
+# ---------------------------------------------------------------------------
+
+
+class TestInitEnvVarCredentials:
+    """When a credential env var is set, init should not pre-fill or overwrite it."""
+
+    def test_env_var_note_shown_in_output(self):
+        """Note about active env var is shown to the user."""
+        with (
+            patch.dict("os.environ", {"SEMANTIC_SCHOLAR_API_KEY": "env-key"}),
+            patch("lumen.config.load_config", return_value=_test_config()),
+            patch(
+                "lumen.commands.init.write_config",
+                return_value=Path("/tmp/config.toml"),
+            ),
+            patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
+            patch("rich.prompt.Confirm.ask", return_value=True),
+            patch("lumen.config._load_toml", return_value={}),
+        ):
+            result = runner.invoke(app, ["init"])
+        assert "SEMANTIC_SCHOLAR_API_KEY" in result.output
+
+    def test_blank_input_preserves_existing_toml_value(self):
+        """Leaving prompt blank with env var active keeps the existing TOML value."""
+        written_config = None
+
+        def capture(cfg, path=None):
+            nonlocal written_config
+            written_config = cfg
+            return Path("/tmp/config.toml")
+
+        # Simulate existing TOML with a stored key (user previously ran init)
+        existing_toml = {"credentials": {"semantic_scholar_api_key": "stored-key"}}
+
+        with (
+            patch.dict("os.environ", {"SEMANTIC_SCHOLAR_API_KEY": "env-key"}),
+            patch("lumen.config.load_config", return_value=_test_config()),
+            patch("lumen.commands.init.write_config", side_effect=capture),
+            # User leaves SS prompt blank, fills Zotero, accepts defaults
+            patch("rich.prompt.Prompt.ask", side_effect=["", "uid", "zot", "10", "table"]),
+            patch("rich.prompt.Confirm.ask", return_value=True),
+            patch("lumen.config._load_toml", return_value=existing_toml),
+        ):
+            runner.invoke(app, ["init"])
+
+        assert written_config is not None
+        # blank + env var active → preserve existing TOML value, not overwrite with ""
+        assert written_config.credentials.semantic_scholar_api_key == "stored-key"
+
+    def test_new_value_overrides_env_var_in_toml(self):
+        """Entering a new value at the prompt writes it to config.toml."""
+        written_config = None
+
+        def capture(cfg, path=None):
+            nonlocal written_config
+            written_config = cfg
+            return Path("/tmp/config.toml")
+
+        with (
+            patch.dict("os.environ", {"SEMANTIC_SCHOLAR_API_KEY": "env-key"}),
+            patch("lumen.config.load_config", return_value=_test_config()),
+            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch(
+                "rich.prompt.Prompt.ask",
+                side_effect=["new-explicit-key", "uid", "zot", "10", "table"],
+            ),
+            patch("rich.prompt.Confirm.ask", return_value=True),
+            patch("lumen.config._load_toml", return_value={}),
+        ):
+            runner.invoke(app, ["init"])
+
+        assert written_config is not None
+        assert written_config.credentials.semantic_scholar_api_key == "new-explicit-key"
+
+    def test_zotero_env_vars_note_shown(self):
+        """Note is shown when both Zotero env vars are active."""
+        with (
+            patch.dict(
+                "os.environ",
+                {"ZOTERO_USER_ID": "env-uid", "ZOTERO_API_KEY": "env-zot"},
+            ),
+            patch("lumen.config.load_config", return_value=_test_config()),
+            patch(
+                "lumen.commands.init.write_config",
+                return_value=Path("/tmp/config.toml"),
+            ),
+            patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
+            patch("rich.prompt.Confirm.ask", return_value=True),
+            patch("lumen.config._load_toml", return_value={}),
+        ):
+            result = runner.invoke(app, ["init"])
+        assert "ZOTERO_USER_ID" in result.output or "ZOTERO_API_KEY" in result.output
+
+    def test_no_env_vars_uses_config_defaults(self):
+        """Without env vars, prompt defaults come from the resolved config."""
+        existing = _test_config()
+        existing.credentials = Credentials(
+            semantic_scholar_api_key="config-key",
+            zotero_user_id="config-uid",
+            zotero_api_key="config-zot",
+        )
+        written_config = None
+
+        def capture(cfg, path=None):
+            nonlocal written_config
+            written_config = cfg
+            return Path("/tmp/config.toml")
+
+        # Remove the three credential env vars so init uses config file defaults.
+        import os
+        safe_env = {k: v for k, v in os.environ.items()
+                    if k not in ("SEMANTIC_SCHOLAR_API_KEY", "ZOTERO_USER_ID", "ZOTERO_API_KEY")}
+        with (
+            patch.dict(os.environ, safe_env, clear=True),
+            patch("lumen.config.load_config", return_value=existing),
+            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch(
+                "rich.prompt.Prompt.ask",
+                side_effect=["config-key", "config-uid", "config-zot", "10", "table"],
+            ),
+            patch("rich.prompt.Confirm.ask", return_value=True),
+            patch("lumen.config._load_toml", return_value={}),
+        ):
+            runner.invoke(app, ["init"])
+
+        assert written_config is not None
+        assert written_config.credentials.semantic_scholar_api_key == "config-key"
