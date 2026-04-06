@@ -16,9 +16,9 @@ import respx
 from lumen.clients.arxiv import ArxivClient
 from lumen.clients.base import _exhausted_retry_message, _http_error_message
 from lumen.clients.semantic_scholar import (
-    SemanticScholarClient,
     _SS_DELAY_NO_KEY,
     _SS_DELAY_WITH_KEY,
+    SemanticScholarClient,
 )
 from lumen.exceptions import SourceError
 
