@@ -14,8 +14,62 @@ import pytest
 import respx
 
 from lumen.clients.arxiv import ArxivClient
-from lumen.clients.base import _http_error_message
+from lumen.clients.base import _exhausted_retry_message, _http_error_message
+from lumen.clients.semantic_scholar import (
+    SemanticScholarClient,
+    _SS_DELAY_NO_KEY,
+    _SS_DELAY_WITH_KEY,
+)
 from lumen.exceptions import SourceError
+
+# ---------------------------------------------------------------------------
+# _exhausted_retry_message — unit tests
+# ---------------------------------------------------------------------------
+
+
+class TestExhaustedRetryMessage:
+    def test_429_mentions_rate_limit(self) -> None:
+        msg, hint = _exhausted_retry_message("SemanticScholarClient", 429)
+        assert "rate limit" in msg.lower()
+        assert "lumen init" in hint
+        assert "API key" in hint
+
+    def test_429_mentions_1_req_per_second(self) -> None:
+        _, hint = _exhausted_retry_message("SemanticScholarClient", 429)
+        assert "1 request" in hint or "req/s" in hint
+
+    def test_500_mentions_unavailable(self) -> None:
+        msg, hint = _exhausted_retry_message("ArxivClient", 500)
+        assert "unavailable" in msg.lower()
+        assert "temporarily" in hint
+
+    def test_503_uses_generic_message(self) -> None:
+        msg, _ = _exhausted_retry_message("ArxivClient", 503)
+        assert "503" in msg
+
+
+# ---------------------------------------------------------------------------
+# SemanticScholarClient rate-limit configuration
+# ---------------------------------------------------------------------------
+
+
+class TestSemanticScholarRateLimit:
+    def test_semaphore_limit_is_one(self) -> None:
+        assert SemanticScholarClient._semaphore_limit == 1
+
+    def test_delay_without_key(self) -> None:
+        client = SemanticScholarClient(api_key="")
+        assert client._request_delay == _SS_DELAY_NO_KEY
+        assert client._request_delay >= 1.0
+
+    def test_delay_with_key(self) -> None:
+        client = SemanticScholarClient(api_key="test-key")
+        assert client._request_delay == _SS_DELAY_WITH_KEY
+        assert client._request_delay < 1.0
+
+    def test_no_key_delay_greater_than_key_delay(self) -> None:
+        assert _SS_DELAY_NO_KEY > _SS_DELAY_WITH_KEY
+
 
 # ---------------------------------------------------------------------------
 # _http_error_message — unit tests
@@ -98,6 +152,16 @@ class TestBaseClientGet:
                 await client._get(_ARXIV_URL)
         assert "500" in exc_info.value.message
         assert "temporarily" in exc_info.value.suggestion
+
+    async def test_429_retries_then_raises_rate_limit_message(self) -> None:
+        """429 exhaustion surfaces a rate-limit-specific message, not 'down'."""
+        with respx.mock:
+            respx.get(_ARXIV_URL).mock(return_value=httpx.Response(429))
+            client = ArxivClient()
+            with pytest.raises(SourceError) as exc_info:
+                await client._get(_ARXIV_URL)
+        assert "rate limit" in exc_info.value.message.lower()
+        assert "API key" in exc_info.value.suggestion
 
     async def test_200_returns_response(self) -> None:
         with respx.mock:

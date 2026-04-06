@@ -1,8 +1,11 @@
 """Semantic Scholar REST API client.
 
-Rate limits:
-  Without API key: 100 req/5 min (conservative default)
-  With API key:    100 req/min
+Rate limits (as of 2025):
+  Without API key: ~1 request/second
+  With API key:    ~10 requests/second
+
+lumen enforces these proactively via a per-request sleep so that normal
+usage stays within budget without relying purely on reactive 429 backoff.
 """
 
 from __future__ import annotations
@@ -31,12 +34,28 @@ def _parse_date(date_str: str | None) -> datetime | None:
         return None
 
 
+# Minimum seconds between requests for each tier.
+_SS_DELAY_NO_KEY = 1.1  # ~1 req/s without an API key (conservative)
+_SS_DELAY_WITH_KEY = 0.12  # ~8 req/s with an API key (safely under 10/s)
+
+
 class SemanticScholarClient(BaseClient):
     """Client for the Semantic Scholar Graph API v1."""
 
-    _semaphore_limit = 5
+    # One concurrent request at a time so the per-request delay is
+    # effective as an inter-request delay even under asyncio.gather.
+    _semaphore_limit = 1
     _BASE_URL = "https://api.semanticscholar.org/graph/v1"
     _REC_URL = "https://api.semanticscholar.org/recommendations/v1"
+
+    @property
+    def _request_delay(self) -> float:
+        """Proactive delay before each request to stay within SS rate limits.
+
+        Returns ``_SS_DELAY_WITH_KEY`` when an API key is configured,
+        ``_SS_DELAY_NO_KEY`` otherwise.
+        """
+        return _SS_DELAY_WITH_KEY if self.api_key else _SS_DELAY_NO_KEY
 
     def _default_headers(self) -> dict[str, str]:
         headers = super()._default_headers()

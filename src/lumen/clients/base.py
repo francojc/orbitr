@@ -64,6 +64,26 @@ def _http_error_message(source: str, status: int) -> tuple[str, str]:
     )
 
 
+def _exhausted_retry_message(source: str, status: int) -> tuple[str, str]:
+    """Return ``(message, suggestion)`` after all retries are exhausted.
+
+    Distinguishes rate-limit exhaustion (429) from server-unavailability
+    (5xx) so the user gets an actionable suggestion in both cases.
+    """
+    if status == 429:
+        return (
+            f"{source}: rate limit reached after repeated retries (HTTP 429).",
+            (
+                "Semantic Scholar allows ~1 request/second without an API key. "
+                "Add a free API key with `lumen init` for higher limits (10 req/s)."
+            ),
+        )
+    return (
+        f"{source} is unavailable (HTTP {status}).",
+        "The source API may be temporarily down. Try again in a few minutes.",
+    )
+
+
 # 429/503: rate-limited or overloaded — always retry with backoff.
 # 500/502/504: transient server errors — worth retrying.
 _RETRY_STATUSES = {429, 500, 502, 503, 504}
@@ -81,6 +101,15 @@ class BaseClient(ABC):
         self.api_key = api_key
         self._semaphore = asyncio.Semaphore(self._semaphore_limit)
         self._circuit_open = False  # True = source is disabled for this invocation
+
+    @property
+    def _request_delay(self) -> float:
+        """Seconds to sleep before each outgoing request.
+
+        Override in subclasses that need proactive rate limiting.
+        Default is 0 (no delay).
+        """
+        return 0.0
 
     # ------------------------------------------------------------------
     # Public interface
@@ -142,6 +171,12 @@ class BaseClient(ABC):
 
         cls_name = self.__class__.__name__
 
+        # Proactive rate-limit: sleep before the first attempt so we stay
+        # within the source's requests-per-second budget without relying
+        # solely on reactive 429 backoff.
+        if delay := self._request_delay:
+            await asyncio.sleep(delay)
+
         async with self._semaphore, httpx.AsyncClient(timeout=15.0) as client:
             for attempt in range(_MAX_RETRIES):
                 try:
@@ -162,11 +197,7 @@ class BaseClient(ABC):
                             continue
                         # Exhausted retries on a retryable status.
                         raise SourceError(
-                            f"{cls_name} is unavailable (HTTP {resp.status_code}).",
-                            suggestion=(
-                                "The source API may be temporarily down. "
-                                "Try again in a few minutes."
-                            ),
+                            *_exhausted_retry_message(cls_name, resp.status_code),
                         )
 
                     # Non-retryable HTTP errors: convert to SourceError immediately.
