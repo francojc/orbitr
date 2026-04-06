@@ -1,4 +1,4 @@
-"""Unit tests for lumen.clients.semantic_scholar.SemanticScholarClient."""
+"""Unit tests for orbitr.clients.semantic_scholar.SemanticScholarClient."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from lumen.clients.semantic_scholar import SemanticScholarClient
-from lumen.exceptions import SourceError
+from orbitr.clients.semantic_scholar import SemanticScholarClient
+from orbitr.exceptions import SourceError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

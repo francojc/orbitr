@@ -1,14 +1,14 @@
-"""Unit tests for lumen.core.deduplication."""
+"""Unit tests for orbitr.core.deduplication."""
 
 from __future__ import annotations
 
-from lumen.core.deduplication import (
+from orbitr.core.deduplication import (
     _authors_overlap,
     _merge,
     _title_similarity,
     deduplicate,
 )
-from lumen.core.models import Author, Paper
+from orbitr.core.models import Author, Paper
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -264,7 +264,7 @@ class TestTitleSimilarityFallback:
             # Re-import after hiding rapidfuzz so the except ImportError path fires.
             import importlib
 
-            import lumen.core.deduplication as dedup_mod
+            import orbitr.core.deduplication as dedup_mod
 
             importlib.reload(dedup_mod)
             return dedup_mod._title_similarity(a, b)
@@ -276,9 +276,9 @@ class TestTitleSimilarityFallback:
             # Reload once more to restore rapidfuzz for subsequent tests.
             import importlib
 
-            import lumen.core.deduplication
+            import orbitr.core.deduplication
 
-            importlib.reload(lumen.core.deduplication)
+            importlib.reload(orbitr.core.deduplication)
 
     def test_fallback_identical_titles(self) -> None:
         score = self._call_fallback("word for word", "word for word")

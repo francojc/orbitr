@@ -1,4 +1,4 @@
-"""Unit tests for lumen.core.ranking."""
+"""Unit tests for orbitr.core.ranking."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from lumen.core.models import Paper
-from lumen.core.ranking import (
+from orbitr.core.models import Paper
+from orbitr.core.ranking import (
     _score_citations,
     _score_date,
     _score_relevance,

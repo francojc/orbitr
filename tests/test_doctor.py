@@ -1,4 +1,4 @@
-"""Integration tests for lumen doctor command."""
+"""Integration tests for orbitr doctor command."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
 
 runner = CliRunner()
 
@@ -23,7 +23,7 @@ def _test_config(**overrides) -> Config:
 
 def _invoke(*args: str, config: Config | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -45,7 +45,7 @@ class TestDoctorAllPass:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")
@@ -57,7 +57,7 @@ class TestDoctorAllPass:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")
@@ -69,7 +69,7 @@ class TestDoctorAllPass:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")
@@ -89,7 +89,7 @@ class TestDoctorFailures:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")
@@ -101,7 +101,7 @@ class TestDoctorFailures:
             ("Semantic Scholar API", False, "Timeout"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")
@@ -113,7 +113,7 @@ class TestDoctorFailures:
             ("Semantic Scholar API", False, "Timeout"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")
@@ -132,7 +132,7 @@ class TestDoctorCredentials:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor", config=_test_config())
@@ -151,7 +151,7 @@ class TestDoctorCredentials:
             ("Zotero API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor", config=_test_config(credentials=creds))
@@ -169,7 +169,7 @@ class TestDoctorCredentials:
             ("Zotero API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             _invoke("doctor", config=_test_config(credentials=creds))
@@ -182,7 +182,7 @@ class TestDoctorCredentials:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             _invoke("doctor", config=_test_config())
@@ -202,7 +202,7 @@ class TestDoctorConfigFile:
             ("Semantic Scholar API", True, "HTTP 200"),
         ]
         with patch(
-            "lumen.commands.doctor._check_url", new_callable=AsyncMock
+            "orbitr.commands.doctor._check_url", new_callable=AsyncMock
         ) as mock_check:
             mock_check.side_effect = checks
             result = _invoke("doctor")

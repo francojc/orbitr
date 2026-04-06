@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for lumen tests."""
+"""Shared pytest fixtures for orbitr tests."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from lumen.config import Config, Credentials
+from orbitr.config import Config, Credentials
 
 
 @pytest.fixture()

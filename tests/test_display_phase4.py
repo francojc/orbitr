@@ -18,9 +18,9 @@ from unittest.mock import patch
 import pytest
 from rich.console import Console
 
-from lumen.core.models import Author, Paper
-from lumen.display import effective_format, render
-from lumen.display.detail import render_detail
+from orbitr.core.models import Author, Paper
+from orbitr.display import effective_format, render
+from orbitr.display.detail import render_detail
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -1,4 +1,4 @@
-"""Tests for core/export.py formatters and the lumen export command."""
+"""Tests for core/export.py formatters and the orbitr export command."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from unittest.mock import AsyncMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
-from lumen.core.export import to_bibtex, to_csl_json, to_ris
-from lumen.core.models import Author, Paper
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
+from orbitr.core.export import to_bibtex, to_csl_json, to_ris
+from orbitr.core.models import Author, Paper
 
 runner = CliRunner()
 
@@ -58,7 +58,7 @@ def _paper(
 
 def _invoke(*args: str, config: Config | None = None, input: str | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args), input=input)
 
 
@@ -198,7 +198,7 @@ class TestToCslJson:
 
 
 # ---------------------------------------------------------------------------
-# CLI: lumen export (stdin path)
+# CLI: orbitr export (stdin path)
 # ---------------------------------------------------------------------------
 
 
@@ -252,7 +252,7 @@ class TestExportStdin:
 
 
 # ---------------------------------------------------------------------------
-# CLI: lumen export --query
+# CLI: orbitr export --query
 # ---------------------------------------------------------------------------
 
 
@@ -261,14 +261,14 @@ class TestExportQuery:
         papers = [_paper()]
         with (
             patch(
-                "lumen.clients.arxiv.ArxivClient.search", new_callable=AsyncMock
+                "orbitr.clients.arxiv.ArxivClient.search", new_callable=AsyncMock
             ) as ax,
             patch(
-                "lumen.clients.semantic_scholar.SemanticScholarClient.search",
+                "orbitr.clients.semantic_scholar.SemanticScholarClient.search",
                 new_callable=AsyncMock,
             ) as ss,
         ):
-            from lumen.core.models import SearchResult
+            from orbitr.core.models import SearchResult
 
             ax.return_value = SearchResult(
                 papers=papers, total_count=1, query="test", sources=["arxiv"]

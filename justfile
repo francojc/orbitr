@@ -1,4 +1,4 @@
-# justfile — lumen development workflow
+# justfile — orbitr development workflow
 # Requires: just, nix (with flakes), uv
 # Entry point: `nix develop` (or direnv with `use flake .`) then `just <recipe>`
 
@@ -10,23 +10,23 @@ default:
 # Install all dependencies and editable package into .venv
 setup:
   uv sync
-  @echo "Run 'uv run lumen --help' to verify."
+  @echo "Run 'uv run orbitr --help' to verify."
 
-# Install lumen as a tool (production-style, not editable)
+# Install orbitr as a tool (production-style, not editable)
 install:
   uv tool install .
 
-# Install lumen as an editable tool (changes take effect immediately)
+# Install orbitr as an editable tool (changes take effect immediately)
 install-dev:
   uv tool install --editable .
 
 # ── Development ────────────────────────────────────────────────────────────────
 
-# Run lumen (pass args after --: just run -- search "transformers")
+# Run orbitr (pass args after --: just run -- search "transformers")
 run *args:
-  uv run lumen {{ args }}
+  uv run orbitr {{ args }}
 
-# Open a Python REPL with lumen on the path
+# Open a Python REPL with orbitr on the path
 repl:
   uv run python
 
@@ -68,7 +68,7 @@ test-unit:
 
 # Run tests with coverage report
 cov:
-  uv run pytest --cov=src/lumen --cov-report=term-missing
+  uv run pytest --cov=src/orbitr --cov-report=term-missing
 
 # Run tests for a single module (e.g.: just test-mod core/test_deduplication)
 test-mod mod:
@@ -80,7 +80,7 @@ test-mod mod:
 build:
   uv build
 
-# Publish to PyPI (requires PYPI_TOKEN env var or uv keyring config)
+# Publish to PyPI (requires UV_PUBLISH_TOKEN env var or uv keyring config)
 publish:
   uv publish
 
@@ -113,10 +113,10 @@ reset: clean
 deps:
   uv pip list
 
-# Run lumen doctor to check connectivity and credentials
+# Run orbitr doctor to check connectivity and credentials
 doctor:
-  uv run lumen doctor
+  uv run orbitr doctor
 
-# Run lumen init to configure credentials interactively
+# Run orbitr init to configure credentials interactively
 init:
-  uv run lumen init
+  uv run orbitr init

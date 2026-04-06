@@ -1,4 +1,4 @@
-"""Integration tests for lumen zotero subcommands."""
+"""Integration tests for orbitr zotero subcommands."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
-from lumen.core.models import Author, Paper
-from lumen.exceptions import ConfigError, LumenError
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
+from orbitr.core.models import Author, Paper
+from orbitr.exceptions import ConfigError, LumenError
 
 runner = CliRunner()
 
@@ -74,12 +74,12 @@ def _zot_mock(
 
 def _invoke(*args: str, config: Config | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
 # ---------------------------------------------------------------------------
-# lumen zotero add
+# orbitr zotero add
 # ---------------------------------------------------------------------------
 
 
@@ -87,9 +87,9 @@ class TestZoteroAdd:
     def test_add_success(self):
         zot = _zot_mock()
         with (
-            patch("lumen.commands.zotero.ZoteroClient", return_value=zot),
+            patch("orbitr.commands.zotero.ZoteroClient", return_value=zot),
             patch(
-                "lumen.commands.zotero.fetch_paper", new_callable=AsyncMock
+                "orbitr.commands.zotero.fetch_paper", new_callable=AsyncMock
             ) as mock_fp,
         ):
             mock_fp.return_value = _paper()
@@ -101,9 +101,9 @@ class TestZoteroAdd:
     def test_add_shows_item_key(self):
         zot = _zot_mock(item_key="ABCD1234")
         with (
-            patch("lumen.commands.zotero.ZoteroClient", return_value=zot),
+            patch("orbitr.commands.zotero.ZoteroClient", return_value=zot),
             patch(
-                "lumen.commands.zotero.fetch_paper",
+                "orbitr.commands.zotero.fetch_paper",
                 new_callable=AsyncMock,
                 return_value=_paper(),
             ),
@@ -114,9 +114,9 @@ class TestZoteroAdd:
     def test_add_with_collection(self):
         zot = _zot_mock(coll_key="COLL0001")
         with (
-            patch("lumen.commands.zotero.ZoteroClient", return_value=zot),
+            patch("orbitr.commands.zotero.ZoteroClient", return_value=zot),
             patch(
-                "lumen.commands.zotero.fetch_paper",
+                "orbitr.commands.zotero.fetch_paper",
                 new_callable=AsyncMock,
                 return_value=_paper(),
             ),
@@ -131,9 +131,9 @@ class TestZoteroAdd:
     def test_add_with_tags(self):
         zot = _zot_mock()
         with (
-            patch("lumen.commands.zotero.ZoteroClient", return_value=zot),
+            patch("orbitr.commands.zotero.ZoteroClient", return_value=zot),
             patch(
-                "lumen.commands.zotero.fetch_paper",
+                "orbitr.commands.zotero.fetch_paper",
                 new_callable=AsyncMock,
                 return_value=_paper(),
             ),
@@ -146,11 +146,11 @@ class TestZoteroAdd:
     def test_add_no_credentials_exits_3(self):
         with (
             patch(
-                "lumen.commands.zotero.ZoteroClient",
+                "orbitr.commands.zotero.ZoteroClient",
                 side_effect=ConfigError("No creds."),
             ),
             patch(
-                "lumen.commands.zotero.fetch_paper",
+                "orbitr.commands.zotero.fetch_paper",
                 new_callable=AsyncMock,
                 return_value=_paper(),
             ),
@@ -164,10 +164,10 @@ class TestZoteroAdd:
         assert result.exit_code == 3
 
     def test_add_paper_fetch_error_exits_1(self):
-        from lumen.exceptions import SourceError
+        from orbitr.exceptions import SourceError
 
         with patch(
-            "lumen.commands.zotero.fetch_paper",
+            "orbitr.commands.zotero.fetch_paper",
             new_callable=AsyncMock,
             side_effect=SourceError("Not found."),
         ):
@@ -178,9 +178,9 @@ class TestZoteroAdd:
         zot = _zot_mock()
         zot.add_paper.side_effect = LumenError("API error.")
         with (
-            patch("lumen.commands.zotero.ZoteroClient", return_value=zot),
+            patch("orbitr.commands.zotero.ZoteroClient", return_value=zot),
             patch(
-                "lumen.commands.zotero.fetch_paper",
+                "orbitr.commands.zotero.fetch_paper",
                 new_callable=AsyncMock,
                 return_value=_paper(),
             ),
@@ -190,14 +190,14 @@ class TestZoteroAdd:
 
 
 # ---------------------------------------------------------------------------
-# lumen zotero collections
+# orbitr zotero collections
 # ---------------------------------------------------------------------------
 
 
 class TestZoteroCollections:
     def test_lists_collections(self):
         zot = _zot_mock()
-        with patch("lumen.commands.zotero.ZoteroClient", return_value=zot):
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
             result = _invoke("zotero", "collections")
         assert result.exit_code == 0
         assert "Transformers" in result.output
@@ -205,7 +205,7 @@ class TestZoteroCollections:
 
     def test_json_format(self):
         zot = _zot_mock()
-        with patch("lumen.commands.zotero.ZoteroClient", return_value=zot):
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
             result = _invoke("zotero", "collections", "--format", "json")
         assert result.exit_code == 0
         data = json.loads(result.output)
@@ -214,15 +214,15 @@ class TestZoteroCollections:
 
     def test_empty_collections(self):
         zot = _zot_mock(collections=[])
-        with patch("lumen.commands.zotero.ZoteroClient", return_value=zot):
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
             result = _invoke("zotero", "collections")
         assert result.exit_code == 0
         assert "No collections" in result.output
 
     def test_no_credentials_exits_3(self):
         with patch(
-            "lumen.commands.zotero.ZoteroClient",
-            side_effect=ConfigError("No creds.", suggestion="Run lumen init."),
+            "orbitr.commands.zotero.ZoteroClient",
+            side_effect=ConfigError("No creds.", suggestion="Run orbitr init."),
         ):
             result = _invoke(
                 "zotero", "collections", config=_test_config(creds=_NO_CREDS)
@@ -231,14 +231,14 @@ class TestZoteroCollections:
 
 
 # ---------------------------------------------------------------------------
-# lumen zotero new
+# orbitr zotero new
 # ---------------------------------------------------------------------------
 
 
 class TestZoteroNew:
     def test_create_collection(self):
         zot = _zot_mock(coll_key="NEW00001")
-        with patch("lumen.commands.zotero.ZoteroClient", return_value=zot):
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
             result = _invoke("zotero", "new", "My New Collection")
         assert result.exit_code == 0
         assert "My New Collection" in result.output
@@ -249,7 +249,7 @@ class TestZoteroNew:
 
     def test_create_nested_collection(self):
         zot = _zot_mock(coll_key="PARENT01")
-        with patch("lumen.commands.zotero.ZoteroClient", return_value=zot):
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
             result = _invoke("zotero", "new", "Subtopic", "--parent", "Transformers")
         assert result.exit_code == 0
         zot.find_collection_key.assert_called_once_with("Transformers")
@@ -259,14 +259,14 @@ class TestZoteroNew:
     def test_parent_not_found_exits_1(self):
         zot = _zot_mock()
         zot.find_collection_key.return_value = None
-        with patch("lumen.commands.zotero.ZoteroClient", return_value=zot):
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
             result = _invoke("zotero", "new", "Child", "--parent", "Nonexistent")
         assert result.exit_code == 1
 
     def test_no_credentials_exits_3(self):
         with patch(
-            "lumen.commands.zotero.ZoteroClient",
-            side_effect=ConfigError("No creds.", suggestion="Run lumen init."),
+            "orbitr.commands.zotero.ZoteroClient",
+            side_effect=ConfigError("No creds.", suggestion="Run orbitr init."),
         ):
             result = _invoke(
                 "zotero", "new", "Test", config=_test_config(creds=_NO_CREDS)

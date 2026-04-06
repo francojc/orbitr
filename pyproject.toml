@@ -3,10 +3,27 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "lumen"
+name = "orbitr"
 version = "0.1.1"
 description = "Academic literature search CLI for arXiv, Semantic Scholar, and Zotero"
 readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Jerid Francom", email = "francojc@wfu.edu" },
+]
+keywords = ["literature", "research", "arxiv", "semantic-scholar", "zotero", "bibliography", "cli", "academic"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Utilities",
+]
 requires-python = ">=3.10"
 dependencies = [
   "typer>=0.15",
@@ -22,10 +39,15 @@ dependencies = [
 ]
 
 [project.scripts]
-lumen = "lumen.cli:main"
+orbitr = "orbitr.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/francojc/orbitr"
+Repository = "https://github.com/francojc/orbitr"
+Changelog = "https://github.com/francojc/orbitr/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/lumen"]
+packages = ["src/orbitr"]
 
 [dependency-groups]
 dev = [

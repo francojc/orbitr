@@ -1,4 +1,4 @@
-# lumen
+# orbitr
 
 Academic literature search and reference management for the terminal. Search
 arXiv and Semantic Scholar concurrently, inspect papers and their citations,
@@ -11,17 +11,17 @@ all without leaving the shell.
 - [Quick start](#quick-start)
 - [Global flags](#global-flags)
 - [Commands](#commands)
-  - [search](#lumen-search)
-  - [paper](#lumen-paper)
-  - [cite](#lumen-cite)
-  - [author](#lumen-author)
-  - [recommend](#lumen-recommend)
-  - [export](#lumen-export)
-  - [query](#lumen-query)
-  - [zotero](#lumen-zotero)
-  - [cache](#lumen-cache)
-  - [init](#lumen-init)
-  - [doctor](#lumen-doctor)
+  - [search](#orbitr-search)
+  - [paper](#orbitr-paper)
+  - [cite](#orbitr-cite)
+  - [author](#orbitr-author)
+  - [recommend](#orbitr-recommend)
+  - [export](#orbitr-export)
+  - [query](#orbitr-query)
+  - [zotero](#orbitr-zotero)
+  - [cache](#orbitr-cache)
+  - [init](#orbitr-init)
+  - [doctor](#orbitr-doctor)
 - [Configuration](#configuration)
 - [Output formats](#output-formats)
 - [Piping and scripting](#piping-and-scripting)
@@ -37,23 +37,23 @@ all without leaving the shell.
 **Requirements:** Python ≥ 3.10, [`uv`](https://docs.astral.sh/uv/)
 
 ```bash
-git clone <repo-url> lumen
-cd lumen
+git clone <repo-url> orbitr
+cd orbitr
 uv tool install .
-lumen --version
+orbitr --version
 ```
 
 ### Development setup
 
-`lumen` uses a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html)
+`orbitr` uses a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html)
 to pin the development environment (Python 3.12, uv, ruff, pyright) and
 [`just`](https://just.systems) as a task runner.
 
 **Prerequisites:** Nix with flakes enabled, direnv, just.
 
 ```bash
-git clone <repo-url> lumen
-cd lumen          # direnv activates the flake shell automatically
+git clone <repo-url> orbitr
+cd orbitr          # direnv activates the flake shell automatically
 just setup        # uv sync inside the pinned environment
 just run -- --help
 ```
@@ -72,16 +72,16 @@ just fmt         # auto-format source files
 
 ### API credentials
 
-`lumen` works without credentials; providing them increases rate limits and
+`orbitr` works without credentials; providing them increases rate limits and
 enables Zotero integration.
 
 | Credential | Purpose |
 |---|---|
 | Semantic Scholar API key | Higher rate limits (get one at semanticscholar.org/product/api) |
-| Zotero User ID + API key | `lumen zotero` commands |
+| Zotero User ID + API key | `orbitr zotero` commands |
 
 ```bash
-lumen init      # guided interactive setup
+orbitr init      # guided interactive setup
 ```
 
 Or set environment variables directly — see [Configuration](#configuration).
@@ -92,29 +92,29 @@ Or set environment variables directly — see [Configuration](#configuration).
 
 ```bash
 # Search across arXiv and Semantic Scholar
-lumen search "retrieval augmented generation"
+orbitr search "retrieval augmented generation"
 
 # Field filters and date range
-lumen search "scaling laws" --from 2022 --sort citations
+orbitr search "scaling laws" --from 2022 --sort citations
 
 # Full metadata for a specific paper (arXiv ID, DOI, or SS ID accepted)
-lumen paper 2005.14165
+orbitr paper 2005.14165
 
 # Papers citing the Transformer paper
-lumen cite 1706.03762 --limit 20
+orbitr cite 1706.03762 --limit 20
 
 # Papers by an author
-lumen author "Percy Liang"
+orbitr author "Percy Liang"
 
 # Recommendations from a seed paper
-lumen recommend 1706.03762
+orbitr recommend 1706.03762
 
 # Export search results as BibTeX
-lumen search "in-context learning" --format json \
-  | lumen export --format bibtex --output refs.bib
+orbitr search "in-context learning" --format json \
+  | orbitr export --format bibtex --output refs.bib
 
 # Add a paper to Zotero
-lumen zotero add 2503.19260 --collection "Reading List" --tags "llm,linguistics"
+orbitr zotero add 2503.19260 --collection "Reading List" --tags "llm,linguistics"
 ```
 
 ---
@@ -136,14 +136,14 @@ These flags work with every command.
 
 ## Commands
 
-### `lumen search`
+### `orbitr search`
 
 Search for papers across arXiv and Semantic Scholar concurrently. Results are
 deduplicated by DOI, arXiv ID, and title similarity, then ranked by the chosen
 criterion.
 
 ```
-lumen search QUERY [OPTIONS]
+orbitr search QUERY [OPTIONS]
 ```
 
 Field filters can be given as CLI flags or embedded directly in the query
@@ -166,31 +166,31 @@ string using `field:value` syntax (e.g. `"title:attention author:Vaswani"`).
 
 ```bash
 # Keyword search
-lumen search "diffusion models image generation"
+orbitr search "diffusion models image generation"
 
 # Field-filter flags
-lumen search "RLHF" --author "Ouyang" --from 2022 --to 2023
+orbitr search "RLHF" --author "Ouyang" --from 2022 --to 2023
 
 # Inline field syntax
-lumen search "title:contrastive learning author:Chen"
+orbitr search "title:contrastive learning author:Chen"
 
 # Single source, sorted by citations
-lumen search "vision transformer" --sources semantic_scholar \
+orbitr search "vision transformer" --sources semantic_scholar \
   --limit 25 --sort citations
 
 # Machine-readable output
-lumen search "federated learning" --format json
+orbitr search "federated learning" --format json
 ```
 
 ---
 
-### `lumen paper`
+### `orbitr paper`
 
 Fetch full metadata for a single paper. Accepts arXiv IDs, DOIs, and
 Semantic Scholar paper IDs — the source is detected automatically.
 
 ```
-lumen paper PAPER_ID [OPTIONS]
+orbitr paper PAPER_ID [OPTIONS]
 ```
 
 **Options:**
@@ -201,22 +201,22 @@ lumen paper PAPER_ID [OPTIONS]
 | `--no-cache` | | | Bypass the local paper cache |
 
 ```bash
-lumen paper 1706.03762                          # arXiv ID
-lumen paper arxiv:2503.19260                    # arXiv ID with prefix
-lumen paper 10.18653/v1/2020.acl-main.196       # DOI
-lumen paper 1706.03762 --format detail          # full single-paper view
-lumen paper 1706.03762 --format json            # machine-readable
+orbitr paper 1706.03762                          # arXiv ID
+orbitr paper arxiv:2503.19260                    # arXiv ID with prefix
+orbitr paper 10.18653/v1/2020.acl-main.196       # DOI
+orbitr paper 1706.03762 --format detail          # full single-paper view
+orbitr paper 1706.03762 --format json            # machine-readable
 ```
 
 ---
 
-### `lumen cite`
+### `orbitr cite`
 
 List papers that cite a given paper via Semantic Scholar. Accepts arXiv IDs,
 DOIs, and Semantic Scholar paper IDs.
 
 ```
-lumen cite PAPER_ID [OPTIONS]
+orbitr cite PAPER_ID [OPTIONS]
 ```
 
 **Options:**
@@ -228,20 +228,20 @@ lumen cite PAPER_ID [OPTIONS]
 | `--no-cache` | | | Bypass the local citation cache |
 
 ```bash
-lumen cite 1706.03762
-lumen cite 1706.03762 --limit 50 --format list
-lumen cite 10.18653/v1/2020.acl-main.196 --format json
+orbitr cite 1706.03762
+orbitr cite 1706.03762 --limit 50 --format list
+orbitr cite 10.18653/v1/2020.acl-main.196 --format json
 ```
 
 ---
 
-### `lumen author`
+### `orbitr author`
 
 Search for an author by name and list their papers via Semantic Scholar.
 Returns publications from the best-matching author result.
 
 ```
-lumen author NAME [OPTIONS]
+orbitr author NAME [OPTIONS]
 ```
 
 **Options:**
@@ -253,20 +253,20 @@ lumen author NAME [OPTIONS]
 | `--no-cache` | | | Bypass the local cache |
 
 ```bash
-lumen author "Emily M. Bender"
-lumen author "LeCun" --limit 20 --format list
-lumen author "Percy Liang" --format json | jq '.[].title'
+orbitr author "Emily M. Bender"
+orbitr author "LeCun" --limit 20 --format list
+orbitr author "Percy Liang" --format json | jq '.[].title'
 ```
 
 ---
 
-### `lumen recommend`
+### `orbitr recommend`
 
 Get papers similar to a seed paper via Semantic Scholar's recommendation API.
 The seed is any paper ID — arXiv ID, DOI, or Semantic Scholar ID.
 
 ```
-lumen recommend SEED [OPTIONS]
+orbitr recommend SEED [OPTIONS]
 ```
 
 **Options:**
@@ -279,20 +279,20 @@ lumen recommend SEED [OPTIONS]
 | `--no-cache` | | | Bypass the local cache |
 
 ```bash
-lumen recommend 1706.03762
-lumen recommend 1706.03762 --method citation --limit 20
-lumen recommend 10.18653/v1/2020.acl-main.196 --format json
+orbitr recommend 1706.03762
+orbitr recommend 1706.03762 --method citation --limit 20
+orbitr recommend 10.18653/v1/2020.acl-main.196 --format json
 ```
 
 ---
 
-### `lumen export`
+### `orbitr export`
 
 Export papers to a bibliography format. Reads paper JSON piped from another
-`lumen` command, or runs a fresh search with `--query`.
+`orbitr` command, or runs a fresh search with `--query`.
 
 ```
-lumen export [OPTIONS]
+orbitr export [OPTIONS]
 ```
 
 **Options:**
@@ -305,29 +305,29 @@ lumen export [OPTIONS]
 
 ```bash
 # Pipe from search
-lumen search "sparse attention" --limit 10 --format json \
-  | lumen export --format bibtex --output sparse.bib
+orbitr search "sparse attention" --limit 10 --format json \
+  | orbitr export --format bibtex --output sparse.bib
 
 # Single paper via pipe
-lumen paper 1706.03762 --format json \
-  | lumen export --format csl-json
+orbitr paper 1706.03762 --format json \
+  | orbitr export --format csl-json
 
 # Direct query (no pipe needed)
-lumen export --query "BERT language model" --format ris --output bert.ris
+orbitr export --query "BERT language model" --format ris --output bert.ris
 
 # RIS to stdout for inspection
-lumen search "contrastive learning" --format json | lumen export --format ris
+orbitr search "contrastive learning" --format json | orbitr export --format ris
 ```
 
 ---
 
-### `lumen query`
+### `orbitr query`
 
-Translate a plain-language description into a `lumen search` command.
+Translate a plain-language description into a `orbitr search` command.
 Extracts year, author, and keywords heuristically.
 
 ```
-lumen query NATURAL [OPTIONS]
+orbitr query NATURAL [OPTIONS]
 ```
 
 **Options:**
@@ -338,28 +338,28 @@ lumen query NATURAL [OPTIONS]
 
 ```bash
 # Show the generated command
-lumen query "recent papers on contrastive learning in NLP"
+orbitr query "recent papers on contrastive learning in NLP"
 
 # Show and run immediately
-lumen query "Vaswani attention transformer 2017" --run
+orbitr query "Vaswani attention transformer 2017" --run
 ```
 
 ---
 
-### `lumen zotero`
+### `orbitr zotero`
 
 Manage your Zotero library. Requires `zotero_user_id` and `zotero_api_key` —
-run `lumen init` to configure them, then `lumen doctor` to verify.
+run `orbitr init` to configure them, then `orbitr doctor` to verify.
 
 ---
 
-#### `lumen zotero add`
+#### `orbitr zotero add`
 
 Add a paper to your Zotero library by ID. Fetches full metadata from arXiv or
 Semantic Scholar and creates a `journalArticle` item.
 
 ```
-lumen zotero add PAPER_ID [OPTIONS]
+orbitr zotero add PAPER_ID [OPTIONS]
 ```
 
 **Options:**
@@ -371,19 +371,19 @@ lumen zotero add PAPER_ID [OPTIONS]
 | `--no-cache` | | Bypass the local paper cache |
 
 ```bash
-lumen zotero add 1706.03762
-lumen zotero add arxiv:2503.19260 --collection "Reading List" --tags "llm,linguistics"
-lumen zotero add 10.18653/v1/2020.acl-main.196 --collection "NLP Papers"
+orbitr zotero add 1706.03762
+orbitr zotero add arxiv:2503.19260 --collection "Reading List" --tags "llm,linguistics"
+orbitr zotero add 10.18653/v1/2020.acl-main.196 --collection "NLP Papers"
 ```
 
 ---
 
-#### `lumen zotero collections`
+#### `orbitr zotero collections`
 
 List all collections in your Zotero library.
 
 ```
-lumen zotero collections [OPTIONS]
+orbitr zotero collections [OPTIONS]
 ```
 
 **Options:**
@@ -393,18 +393,18 @@ lumen zotero collections [OPTIONS]
 | `--format` | `-f` | `table` | `table` or `json` |
 
 ```bash
-lumen zotero collections
-lumen zotero collections --format json | jq '.[].name'
+orbitr zotero collections
+orbitr zotero collections --format json | jq '.[].name'
 ```
 
 ---
 
-#### `lumen zotero new`
+#### `orbitr zotero new`
 
 Create a new collection in your Zotero library.
 
 ```
-lumen zotero new NAME [OPTIONS]
+orbitr zotero new NAME [OPTIONS]
 ```
 
 **Options:**
@@ -414,19 +414,19 @@ lumen zotero new NAME [OPTIONS]
 | `--parent` | `-p` | Parent collection name or key |
 
 ```bash
-lumen zotero new "PhD Research"
-lumen zotero new "Chapter 3" --parent "PhD Research"
+orbitr zotero new "PhD Research"
+orbitr zotero new "Chapter 3" --parent "PhD Research"
 ```
 
 ---
 
-### `lumen cache`
+### `orbitr cache`
 
 Manage the local SQLite result cache. Three tiers are maintained independently:
 `search` (1 h TTL), `paper` (24 h), `citations` (6 h).
 
 ```
-lumen cache COMMAND
+orbitr cache COMMAND
 ```
 
 | Subcommand | Description |
@@ -436,22 +436,22 @@ lumen cache COMMAND
 | `clear [--tier T] [--yes]` | Delete all entries; prompts unless `--yes` |
 
 ```bash
-lumen cache stats
-lumen cache clean
-lumen cache clean --tier search
-lumen cache clear --yes
-lumen cache clear --tier paper --yes
+orbitr cache stats
+orbitr cache clean
+orbitr cache clean --tier search
+orbitr cache clear --yes
+orbitr cache clear --tier paper --yes
 ```
 
 ---
 
-### `lumen init`
+### `orbitr init`
 
-Interactive first-time setup. Writes `~/.config/lumen/config.toml` with mode
+Interactive first-time setup. Writes `~/.config/orbitr/config.toml` with mode
 `0600`. Run once after installing, or again to rotate credentials.
 
 ```bash
-lumen init
+orbitr init
 ```
 
 Prompts for Semantic Scholar API key, Zotero credentials, and default
@@ -459,14 +459,14 @@ preferences. All values are optional and can be skipped.
 
 ---
 
-### `lumen doctor`
+### `orbitr doctor`
 
 Check configuration and connectivity to arXiv and Semantic Scholar (and Zotero
 if credentials are configured). Exits `0` if all checks pass, `1` if any
 connectivity check fails.
 
 ```bash
-lumen doctor
+orbitr doctor
 ```
 
 ---
@@ -481,7 +481,7 @@ CLI flags  >  environment variables  >  config file  >  built-in defaults
 
 ### Config file
 
-Location: `~/.config/lumen/config.toml` (XDG; override with `--config`).
+Location: `~/.config/orbitr/config.toml` (XDG; override with `--config`).
 
 ```toml
 [defaults]
@@ -524,7 +524,7 @@ All paper-returning commands support `--format` / `-f`:
 |---|---|---|
 | `table` | Compact multi-column table (truncated fields) | Interactive browsing |
 | `list` | One labeled block per paper, abstract snippet | Skimming results |
-| `detail` | Full single-paper view with wrapped abstract | `lumen paper` |
+| `detail` | Full single-paper view with wrapped abstract | `orbitr paper` |
 | `json` | Newline-delimited JSON objects | Piping, `jq`, scripting |
 
 **Auto-detection:** when stdout is not a TTY (pipe or redirect), `--format`
@@ -539,24 +539,24 @@ stdout is a TTY. Disable with `LUMEN_NO_PAGER=1` or `--no-color`.
 
 - Results → **stdout**; warnings and errors → **stderr**.
 - `--format json` always produces newline-delimited JSON regardless of TTY.
-- `lumen export` reads piped JSON from any `lumen` command.
+- `orbitr export` reads piped JSON from any `orbitr` command.
 - Use `-q` / `--quiet` to suppress progress output in scripts.
 
 ```bash
 # Search → BibTeX file
-lumen search "in-context learning" --sort citations --limit 10 --format json \
-  | lumen export --format bibtex --output icl.bib
+orbitr search "in-context learning" --sort citations --limit 10 --format json \
+  | orbitr export --format bibtex --output icl.bib
 
 # Extract titles with jq
-lumen search "model merging" --format json | jq -r '.[].title'
+orbitr search "model merging" --format json | jq -r '.[].title'
 
 # Author publication list as CSV
-lumen author "Danqi Chen" --format json \
+orbitr author "Danqi Chen" --format json \
   | jq -r '.[] | [.title, (.published_date // ""), (.citation_count // 0)] | @csv' \
   > danqi_chen.csv
 
 # Pipe into a custom script
-lumen search "continual learning" --limit 20 --format json | python triage.py
+orbitr search "continual learning" --limit 20 --format json | python triage.py
 ```
 
 ---
@@ -575,12 +575,12 @@ lumen search "continual learning" --limit 20 --format json | python triage.py
 
 ## Shell completions
 
-`lumen` supports tab-completion for Zsh, Bash, and Fish via Click's completion
+`orbitr` supports tab-completion for Zsh, Bash, and Fish via Click's completion
 system. The simplest method is the built-in flag (works when run directly from
 an interactive shell):
 
 ```bash
-lumen --install-completion   # detects your shell and installs automatically
+orbitr --install-completion   # detects your shell and installs automatically
 ```
 
 If auto-detection fails, generate the script manually with the `_LUMEN_COMPLETE`
@@ -589,7 +589,7 @@ environment variable:
 **Zsh:**
 
 ```bash
-_LUMEN_COMPLETE=source_zsh lumen > ~/.zfunc/_lumen
+_LUMEN_COMPLETE=source_zsh orbitr > ~/.zfunc/_orbitr
 # Add to ~/.zshrc (if not already present):
 #   fpath=(~/.zfunc $fpath)
 #   autoload -Uz compinit && compinit
@@ -598,15 +598,15 @@ _LUMEN_COMPLETE=source_zsh lumen > ~/.zfunc/_lumen
 **Bash:**
 
 ```bash
-_LUMEN_COMPLETE=source_bash lumen > ~/.bash_completion.d/lumen
+_LUMEN_COMPLETE=source_bash orbitr > ~/.bash_completion.d/orbitr
 # Add to ~/.bashrc:
-#   source ~/.bash_completion.d/lumen
+#   source ~/.bash_completion.d/orbitr
 ```
 
 **Fish:**
 
 ```bash
-_LUMEN_COMPLETE=source_fish lumen > ~/.config/fish/completions/lumen.fish
+_LUMEN_COMPLETE=source_fish orbitr > ~/.config/fish/completions/orbitr.fish
 ```
 
 ---
@@ -614,29 +614,29 @@ _LUMEN_COMPLETE=source_fish lumen > ~/.config/fish/completions/lumen.fish
 ## Project layout
 
 ```
-lumen/
+orbitr/
 ├── pyproject.toml
 ├── flake.nix
 ├── .env.example
 ├── README.md
 ├── src/
-│   └── lumen/
+│   └── orbitr/
 │       ├── __init__.py
 │       ├── cli.py              # Typer app root; global flags; command registration
 │       ├── config.py           # Layered config: flags > env vars > file > defaults
 │       ├── _async.py           # asyncio.run() helper
 │       ├── exceptions.py       # LumenError hierarchy with exit codes
 │       ├── commands/
-│       │   ├── search.py       # lumen search
-│       │   ├── paper.py        # lumen paper, lumen cite
-│       │   ├── author.py       # lumen author
-│       │   ├── recommend.py    # lumen recommend
-│       │   ├── export.py       # lumen export
-│       │   ├── query.py        # lumen query
-│       │   ├── zotero.py       # lumen zotero add / collections / new
-│       │   ├── cache.py        # lumen cache stats / clean / clear
-│       │   ├── init.py         # lumen init
-│       │   └── doctor.py       # lumen doctor
+│       │   ├── search.py       # orbitr search
+│       │   ├── paper.py        # orbitr paper, orbitr cite
+│       │   ├── author.py       # orbitr author
+│       │   ├── recommend.py    # orbitr recommend
+│       │   ├── export.py       # orbitr export
+│       │   ├── query.py        # orbitr query
+│       │   ├── zotero.py       # orbitr zotero add / collections / new
+│       │   ├── cache.py        # orbitr cache stats / clean / clear
+│       │   ├── init.py         # orbitr init
+│       │   └── doctor.py       # orbitr doctor
 │       ├── clients/
 │       │   ├── base.py         # Retry, backoff, circuit-break; HTTPError → SourceError
 │       │   ├── arxiv.py        # arXiv Atom feed client

@@ -1,6 +1,6 @@
 # Development Project Progress
 
-**Project:** lumen
+**Project:** orbitr
 **Status:** v0.1.0 released
 **Last Updated:** 2026-04-06
 
@@ -20,8 +20,8 @@
 - Phase 1 complete: git repo, pyproject.toml, uv.lock, Typer app skeleton with all global
   flags (`--version`, `--verbose`, `--quiet`, `--no-color`, `--config`), config resolution
   layer (XDG paths, TOML file, env vars, CLI flag merging, 0600 credential write), all 11
-  command stubs with full `--help` strings and argument signatures, `lumen init` (interactive
-  Rich prompts, writes config), `lumen doctor` (async connectivity checks), full package
+  command stubs with full `--help` strings and argument signatures, `orbitr init` (interactive
+  Rich prompts, writes config), `orbitr doctor` (async connectivity checks), full package
   skeleton (`clients/`, `core/`, `display/`, `zotero/`), test scaffold — 2026-04-05
 - Phase 2 session 1: `core/models.py` tested (15 tests); `clients/arxiv.py` implemented
   (`_parse_entry`, `search`, `get_by_id`); arXiv Atom fixtures saved to `tests/fixtures/`;
@@ -76,19 +76,19 @@
 - [x] SQLite cache with TTL tiers — implemented and tested (19 tests)
 - [x] `core/query.py` — field-filter parsing, per-source query builders, cache key (phase 3)
 - [x] `display/` layer — `json_fmt`, `table`, `list`, unified `render()` dispatcher (phase 3)
-- [x] `lumen search` — full pipeline: concurrent fetch, cache, dedup, rank, display (phase 3)
-- [x] `lumen paper` — `_detect_id_type`, `_normalize_for_ss`, cache tier `paper` (phase 3)
-- [x] `lumen cite` — SS `get_citations`, cache tier `citations` (phase 3)
-- [x] `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py` (phase 3)
-- [x] `lumen recommend` — SS recommendations, `--method` validation, cache (phase 3)
-- [x] `lumen author` — SS `search_authors` two-step, cache (phase 3)
+- [x] `orbitr search` — full pipeline: concurrent fetch, cache, dedup, rank, display (phase 3)
+- [x] `orbitr paper` — `_detect_id_type`, `_normalize_for_ss`, cache tier `paper` (phase 3)
+- [x] `orbitr cite` — SS `get_citations`, cache tier `citations` (phase 3)
+- [x] `orbitr cache stats/clean/clear` — thin wrappers over `core/cache.py` (phase 3)
+- [x] `orbitr recommend` — SS recommendations, `--method` validation, cache (phase 3)
+- [x] `orbitr author` — SS `search_authors` two-step, cache (phase 3)
 - [x] `core/export.py` — `to_bibtex`, `to_ris`, `to_csl_json` (phase 3)
-- [x] `lumen export` — stdin ndjson + `--query` paths, `--output` file (phase 3)
-- [x] `lumen init` — fixed + fully tested (phase 3)
-- [x] `lumen doctor` — fixed + fully tested (phase 3)
-- [x] `lumen query` — `_parse_natural`, `_build_command`, `--run` (phase 3)
+- [x] `orbitr export` — stdin ndjson + `--query` paths, `--output` file (phase 3)
+- [x] `orbitr init` — fixed + fully tested (phase 3)
+- [x] `orbitr doctor` — fixed + fully tested (phase 3)
+- [x] `orbitr query` — `_parse_natural`, `_build_command`, `--run` (phase 3)
 - [x] `zotero/client.py` — `add_paper`, `list_collections`, `create_collection`, `find_collection_key` (phase 3)
-- [x] `lumen zotero add/collections/new` — full Zotero integration (phase 3)
+- [x] `orbitr zotero add/collections/new` — full Zotero integration (phase 3)
 
 ## Milestone Tracking
 
@@ -97,7 +97,7 @@
 - [x] ~~README and project design~~ — 2026-04-05
 - [x] ~~Phase 1: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
 - [x] ~~Phase 2: Core data layer — all clients, dedup, ranking, cache~~ — 2026-04-07
-- [x] ~~Phase 3 session 1: `lumen search` implemented~~ — 2026-04-05
+- [x] ~~Phase 3 session 1: `orbitr search` implemented~~ — 2026-04-05
 - [x] ~~Phase 3 complete: all 11 commands implemented~~ — 2026-04-05
 
 ### Upcoming Milestones
@@ -139,15 +139,15 @@ _None identified yet._
 
 - [x] `pyproject.toml` with Hatchling backend, all runtime and dev dependencies
 - [x] `flake.nix` dev shell (Python 3.12, uv, ruff, pyright, git)
-- [x] `src/lumen/` package skeleton: all modules and subpackages
-- [x] `lumen.cli` — Typer app, global flags, command registration, entry point
-- [x] `lumen.config` — layered config (XDG, TOML, env vars, CLI flags), `write_config` (0600)
-- [x] `lumen.exceptions` — `LumenError` hierarchy with exit codes
-- [x] `lumen._async` — `run()` utility for per-command async execution
-- [x] `lumen.core.models` — `Paper`, `Author`, `SearchResult` Pydantic models
+- [x] `src/orbitr/` package skeleton: all modules and subpackages
+- [x] `orbitr.cli` — Typer app, global flags, command registration, entry point
+- [x] `orbitr.config` — layered config (XDG, TOML, env vars, CLI flags), `write_config` (0600)
+- [x] `orbitr.exceptions` — `LumenError` hierarchy with exit codes
+- [x] `orbitr._async` — `run()` utility for per-command async execution
+- [x] `orbitr.core.models` — `Paper`, `Author`, `SearchResult` Pydantic models
 - [x] All 11 command stubs with full `--help` text and argument/option signatures
-- [x] `lumen init` — interactive Rich prompts, writes config.toml
-- [x] `lumen doctor` — async connectivity checks for arXiv, Semantic Scholar, Zotero
+- [x] `orbitr init` — interactive Rich prompts, writes config.toml
+- [x] `orbitr doctor` — async connectivity checks for arXiv, Semantic Scholar, Zotero
 - [x] `clients/base.py` — abstract client with retry, backoff, circuit breaker skeleton
 - [x] Stub skeletons for `clients/`, `core/`, `display/`, `zotero/`
 - [x] `tests/conftest.py` with basic fixtures
@@ -205,9 +205,9 @@ _Nothing deferred yet._
 - No test coverage measurement yet — `pytest-cov` not yet run against Phase 2 or Phase 3 modules
 - `display/detail.py` still a stub — falls back to `render_list` for now; proper full-paper view deferred to Phase 4
 - TTY auto-detection for default `--format` not yet implemented — always uses config default (`table`)
-- `lumen query --run` depends on `ctx.invoke`; integration test uses mocked search — live `--run` path not covered
+- `orbitr query --run` depends on `ctx.invoke`; integration test uses mocked search — live `--run` path not covered
 - Pager integration not yet implemented — long result sets truncate at terminal height
-- `lumen export` stdin detection may behave unexpectedly in non-TTY CI environments — documented in test skip
+- `orbitr export` stdin detection may behave unexpectedly in non-TTY CI environments — documented in test skip
 
 ## Dependency Status
 
@@ -266,7 +266,7 @@ _None yet._
 
 - **Version:** 0.1.0
 - **Target Date:** 2026-06-23
-- **Included Features:** All 11 commands, three sources, Zotero integration, caching, shell completions, `lumen init`, `lumen doctor`
+- **Included Features:** All 11 commands, three sources, Zotero integration, caching, shell completions, `orbitr init`, `orbitr doctor`
 - **Release Blockers:** Everything — not yet started
 
 ### Release History

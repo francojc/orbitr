@@ -1,13 +1,13 @@
-"""Integration tests for lumen paper and lumen cite commands.
+"""Integration tests for orbitr paper and orbitr cite commands.
 
 Strategy
 --------
 - Use Typer's ``CliRunner`` against the full ``app`` object.
-- Patch ``lumen.config.load_config`` to inject a deterministic ``Config``
+- Patch ``orbitr.config.load_config`` to inject a deterministic ``Config``
   with ``no_cache=True`` so most tests bypass the cache entirely.
 - Patch ``ArxivClient.get_by_id`` or ``SemanticScholarClient.get_by_id`` /
   ``get_citations`` at the method level with ``AsyncMock`` — no live network.
-- Cache-hit tests patch ``lumen.commands.paper.Cache`` directly.
+- Cache-hit tests patch ``orbitr.commands.paper.Cache`` directly.
 """
 
 from __future__ import annotations
@@ -18,11 +18,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.commands.paper import _detect_id_type, _normalize_for_ss
-from lumen.config import Config, Credentials
-from lumen.core.models import Author, Paper
-from lumen.exceptions import SourceError
+from orbitr.cli import app
+from orbitr.commands.paper import _detect_id_type, _normalize_for_ss
+from orbitr.config import Config, Credentials
+from orbitr.core.models import Author, Paper
+from orbitr.exceptions import SourceError
 
 runner = CliRunner()
 
@@ -62,7 +62,7 @@ def _paper(
 
 def _invoke(*args: str, config: Config | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -134,7 +134,7 @@ class TestNormalizeForSS:
 
 
 # ---------------------------------------------------------------------------
-# lumen paper — arXiv ID
+# orbitr paper — arXiv ID
 # ---------------------------------------------------------------------------
 
 
@@ -142,7 +142,7 @@ class TestPaperArxiv:
     def test_arxiv_id_calls_arxiv_client(self):
         p = _paper()
         with patch(
-            "lumen.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
+            "orbitr.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
         ) as mock_get:
             mock_get.return_value = p
             result = _invoke("paper", "1706.03762")
@@ -152,7 +152,7 @@ class TestPaperArxiv:
     def test_arxiv_id_output_contains_title(self):
         p = _paper(title="Unique Title XYZ")
         with patch(
-            "lumen.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
+            "orbitr.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
         ) as mock_get:
             mock_get.return_value = p
             result = _invoke("paper", "1706.03762")
@@ -161,7 +161,7 @@ class TestPaperArxiv:
     def test_arxiv_json_format(self):
         p = _paper()
         with patch(
-            "lumen.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
+            "orbitr.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
         ) as mock_get:
             mock_get.return_value = p
             result = _invoke("paper", "1706.03762", "--format", "json")
@@ -171,7 +171,7 @@ class TestPaperArxiv:
 
     def test_arxiv_source_error_exits_1(self):
         with patch(
-            "lumen.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
+            "orbitr.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
         ) as mock_get:
             mock_get.side_effect = SourceError("Not found.")
             result = _invoke("paper", "9999.99999")
@@ -179,7 +179,7 @@ class TestPaperArxiv:
 
 
 # ---------------------------------------------------------------------------
-# lumen paper — DOI / Semantic Scholar ID
+# orbitr paper — DOI / Semantic Scholar ID
 # ---------------------------------------------------------------------------
 
 
@@ -187,7 +187,7 @@ class TestPaperSS:
     def test_doi_calls_ss_client(self):
         p = _paper(source="semantic_scholar", arxiv_id=None, doi="10.18653/v1/P16-1162")
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_by_id",
+            "orbitr.commands.paper.SemanticScholarClient.get_by_id",
             new_callable=AsyncMock,
         ) as mock_get:
             mock_get.return_value = p
@@ -200,7 +200,7 @@ class TestPaperSS:
         ss_id = "204e3073870fae3d05bcbc2f6a8e263d9b72e776"
         p = _paper(source="semantic_scholar", arxiv_id=None)
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_by_id",
+            "orbitr.commands.paper.SemanticScholarClient.get_by_id",
             new_callable=AsyncMock,
         ) as mock_get:
             mock_get.return_value = p
@@ -210,7 +210,7 @@ class TestPaperSS:
 
     def test_ss_source_error_exits_1(self):
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_by_id",
+            "orbitr.commands.paper.SemanticScholarClient.get_by_id",
             new_callable=AsyncMock,
         ) as mock_get:
             mock_get.side_effect = SourceError("Not found.")
@@ -223,7 +223,7 @@ class TestPaperSS:
 
 
 # ---------------------------------------------------------------------------
-# lumen paper — cache hit
+# orbitr paper — cache hit
 # ---------------------------------------------------------------------------
 
 
@@ -233,9 +233,9 @@ class TestPaperCacheHit:
         mock_cache = MagicMock()
         mock_cache.get.return_value = json.loads(p.model_dump_json())
         with (
-            patch("lumen.commands.paper.Cache", return_value=mock_cache),
+            patch("orbitr.commands.paper.Cache", return_value=mock_cache),
             patch(
-                "lumen.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
+                "orbitr.commands.paper.ArxivClient.get_by_id", new_callable=AsyncMock
             ) as mock_get,
         ):
             result = _invoke("paper", "1706.03762", config=_test_config(no_cache=False))
@@ -244,7 +244,7 @@ class TestPaperCacheHit:
 
 
 # ---------------------------------------------------------------------------
-# lumen cite
+# orbitr cite
 # ---------------------------------------------------------------------------
 
 
@@ -252,7 +252,7 @@ class TestCite:
     def test_cite_returns_papers(self):
         papers = [_paper(title=f"Citing Paper {i}") for i in range(3)]
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_citations",
+            "orbitr.commands.paper.SemanticScholarClient.get_citations",
             new_callable=AsyncMock,
         ) as mock_cit:
             mock_cit.return_value = papers
@@ -263,7 +263,7 @@ class TestCite:
     def test_cite_passes_arxiv_prefix(self):
         papers = [_paper()]
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_citations",
+            "orbitr.commands.paper.SemanticScholarClient.get_citations",
             new_callable=AsyncMock,
         ) as mock_cit:
             mock_cit.return_value = papers
@@ -275,7 +275,7 @@ class TestCite:
     def test_cite_limit_applied(self):
         papers = [_paper(title=f"Paper {i}") for i in range(20)]
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_citations",
+            "orbitr.commands.paper.SemanticScholarClient.get_citations",
             new_callable=AsyncMock,
         ) as mock_cit:
             mock_cit.return_value = papers[:5]
@@ -287,7 +287,7 @@ class TestCite:
     def test_cite_json_format(self):
         papers = [_paper()]
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_citations",
+            "orbitr.commands.paper.SemanticScholarClient.get_citations",
             new_callable=AsyncMock,
         ) as mock_cit:
             mock_cit.return_value = papers
@@ -298,7 +298,7 @@ class TestCite:
 
     def test_cite_no_results_exits_4(self):
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_citations",
+            "orbitr.commands.paper.SemanticScholarClient.get_citations",
             new_callable=AsyncMock,
         ) as mock_cit:
             mock_cit.return_value = []
@@ -307,7 +307,7 @@ class TestCite:
 
     def test_cite_source_error_exits_1(self):
         with patch(
-            "lumen.commands.paper.SemanticScholarClient.get_citations",
+            "orbitr.commands.paper.SemanticScholarClient.get_citations",
             new_callable=AsyncMock,
         ) as mock_cit:
             mock_cit.side_effect = SourceError("API error.")
@@ -323,9 +323,9 @@ class TestCite:
         mock_cache = MagicMock()
         mock_cache.get.return_value = [json.loads(p.model_dump_json())]
         with (
-            patch("lumen.commands.paper.Cache", return_value=mock_cache),
+            patch("orbitr.commands.paper.Cache", return_value=mock_cache),
             patch(
-                "lumen.commands.paper.SemanticScholarClient.get_citations",
+                "orbitr.commands.paper.SemanticScholarClient.get_citations",
                 new_callable=AsyncMock,
             ) as mock_cit,
         ):

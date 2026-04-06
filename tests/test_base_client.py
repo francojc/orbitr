@@ -13,14 +13,14 @@ import httpx
 import pytest
 import respx
 
-from lumen.clients.arxiv import ArxivClient
-from lumen.clients.base import _exhausted_retry_message, _http_error_message
-from lumen.clients.semantic_scholar import (
+from orbitr.clients.arxiv import ArxivClient
+from orbitr.clients.base import _exhausted_retry_message, _http_error_message
+from orbitr.clients.semantic_scholar import (
     _SS_DELAY_NO_KEY,
     _SS_DELAY_WITH_KEY,
     SemanticScholarClient,
 )
-from lumen.exceptions import SourceError
+from orbitr.exceptions import SourceError
 
 # ---------------------------------------------------------------------------
 # _exhausted_retry_message — unit tests
@@ -31,7 +31,7 @@ class TestExhaustedRetryMessage:
     def test_429_mentions_rate_limit(self) -> None:
         msg, hint = _exhausted_retry_message("SemanticScholarClient", 429)
         assert "rate limit" in msg.lower()
-        assert "lumen init" in hint
+        assert "orbitr init" in hint
         assert "API key" in hint
 
     def test_429_mentions_1_req_per_second(self) -> None:
@@ -80,13 +80,13 @@ class TestHttpErrorMessage:
     def test_401_message(self) -> None:
         msg, hint = _http_error_message("TestSource", 401)
         assert "401" in msg
-        assert "lumen init" in hint
+        assert "orbitr init" in hint
 
     def test_403_message(self) -> None:
         msg, hint = _http_error_message("TestSource", 403)
         assert "403" in msg
         assert "API key" in hint
-        assert "lumen init" in hint
+        assert "orbitr init" in hint
 
     def test_404_message(self) -> None:
         msg, hint = _http_error_message("TestSource", 404)
@@ -96,7 +96,7 @@ class TestHttpErrorMessage:
     def test_429_message(self) -> None:
         msg, hint = _http_error_message("TestSource", 429)
         assert "429" in msg
-        assert "lumen init" in hint
+        assert "orbitr init" in hint
 
     def test_500_message(self) -> None:
         msg, hint = _http_error_message("TestSource", 500)
@@ -110,7 +110,7 @@ class TestHttpErrorMessage:
     def test_unknown_status(self) -> None:
         msg, hint = _http_error_message("TestSource", 418)
         assert "418" in msg
-        assert "lumen doctor" in hint
+        assert "orbitr doctor" in hint
 
     def test_source_name_in_message(self) -> None:
         msg, _ = _http_error_message("ArxivClient", 403)

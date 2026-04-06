@@ -1,6 +1,6 @@
 # Development Project Planning
 
-**Project:** lumen
+**Project:** orbitr
 **Status:** Planning
 **Last Updated:** 2026-04-05
 
@@ -17,7 +17,7 @@
 
 - Researchers, academics, and students lack a fast, composable, terminal-native way to search academic literature across multiple databases simultaneously.
 - Existing tools either require a GUI (Zotero, Google Scholar), are locked to a single source (arXiv CLI tools), or are not designed for scripting and automation.
-- `lumen` fills this gap: a well-designed CLI that follows Unix conventions, supports piping and JSON output, and integrates directly with Zotero for reference management — all without leaving the terminal.
+- `orbitr` fills this gap: a well-designed CLI that follows Unix conventions, supports piping and JSON output, and integrates directly with Zotero for reference management — all without leaving the terminal.
 
 ### Goals and Non-Goals
 
@@ -30,9 +30,9 @@
 - [ ] Zotero library integration: add papers, create collections, list collections with automatic tagging
 - [ ] Local result caching with TTL tiers for search, paper, and citation data
 - [ ] Full Unix composability: stdout/stderr discipline, JSON output, pipe-friendly design
-- [ ] Robust help system, informative errors with suggestions, and `lumen doctor` diagnostics
+- [ ] Robust help system, informative errors with suggestions, and `orbitr doctor` diagnostics
 - [ ] Shell completions for Zsh, Bash, and Fish
-- [ ] `lumen init` guided setup for credentials and defaults
+- [ ] `orbitr init` guided setup for credentials and defaults
 
 #### Non-Goals
 
@@ -69,7 +69,7 @@
 - Rate limiting respected per source: arXiv (3 req/s), Semantic Scholar (100 req/min with key), Google Scholar (conservative with delays)
 - Retry with exponential backoff on 429/503; circuit-break per source so partial failures degrade gracefully
 - `NO_COLOR` env var and `--no-color` flag honored throughout
-- Config and cache follow XDG Base Directory spec (`~/.config/lumen/`, `~/.cache/lumen/`)
+- Config and cache follow XDG Base Directory spec (`~/.config/orbitr/`, `~/.cache/orbitr/`)
 - Credentials file created with `0600` permissions
 
 ## Timeline and Milestones
@@ -80,7 +80,7 @@
 - [x] Set up Typer app skeleton with global flags (`--help`, `--version`, `--verbose`, `--quiet`, `--no-color`)
 - [x] Implement config resolution layer (file, env vars, defaults)
 - [x] Stub all command modules with `--help` strings and argument signatures
-- [x] Write `lumen init` and `lumen doctor` skeletons
+- [x] Write `orbitr init` and `orbitr doctor` skeletons
 
 ### Phase 2: Core Data Layer (Weeks 3–4) — COMPLETE
 
@@ -94,17 +94,17 @@
 
 ### Phase 3: Command Implementation (Weeks 5–8) — COMPLETE
 
-- [x] `lumen search` — keyword + field filters, multi-source, dedup, rank
-- [x] `lumen paper` — fetch by ID from arXiv or Semantic Scholar
-- [x] `lumen cite` — citing papers via Semantic Scholar
-- [x] `lumen author` — author search across sources
-- [x] `lumen recommend` — content, citation, and hybrid methods via SS
-- [x] `lumen export` — BibTeX, RIS, CSL-JSON; stdin ndjson + `--query` paths
-- [x] `lumen query` — natural language to query syntax helper; `--run` flag
-- [x] `lumen zotero add/collections/new` — full Zotero integration
-- [x] `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py`
-- [x] `lumen init` — full interactive credential setup (fixed + tested)
-- [x] `lumen doctor` — connectivity and config health checks (fixed + tested)
+- [x] `orbitr search` — keyword + field filters, multi-source, dedup, rank
+- [x] `orbitr paper` — fetch by ID from arXiv or Semantic Scholar
+- [x] `orbitr cite` — citing papers via Semantic Scholar
+- [x] `orbitr author` — author search across sources
+- [x] `orbitr recommend` — content, citation, and hybrid methods via SS
+- [x] `orbitr export` — BibTeX, RIS, CSL-JSON; stdin ndjson + `--query` paths
+- [x] `orbitr query` — natural language to query syntax helper; `--run` flag
+- [x] `orbitr zotero add/collections/new` — full Zotero integration
+- [x] `orbitr cache stats/clean/clear` — thin wrappers over `core/cache.py`
+- [x] `orbitr init` — full interactive credential setup (fixed + tested)
+- [x] `orbitr doctor` — connectivity and config health checks (fixed + tested)
 
 ### Phase 4: Display and Polish (Weeks 9–10) — COMPLETE
 
@@ -128,7 +128,7 @@
 ### Phase 6: Release (Week 13) — COMPLETE
 
 - [x] `uv build` — wheel and sdist produced
-- [x] Wheel install verified (`lumen --version` returns `0.1.0`)
+- [x] Wheel install verified (`orbitr --version` returns `0.1.0`)
 - [x] `CHANGELOG.md` written
 - [x] Tag v0.1.0
 
@@ -158,7 +158,7 @@
 ### Technical Risks
 
 - **Google Scholar scraping fragility** — deferred to v1.1; structure changes frequently and a brittle scraper raises maintenance burden disproportionate to value at launch
-- **Rate limiting from Semantic Scholar without an API key** — mitigate with conservative defaults, cache, and clear error messages pointing to `lumen init`
+- **Rate limiting from Semantic Scholar without an API key** — mitigate with conservative defaults, cache, and clear error messages pointing to `orbitr init`
 - **Async complexity in Typer** — Typer runs synchronously; mitigate by wrapping async client calls in `asyncio.run()` per command, or using a thin async runner utility
 
 ### Scope Risks
@@ -173,18 +173,18 @@
 
 - [ ] All 11 commands implemented and passing integration tests
 - [ ] Multi-source search returns deduplicated, ranked results
-- [ ] Pipe chain `lumen search ... --format json | lumen export` works end-to-end
+- [ ] Pipe chain `orbitr search ... --format json | orbitr export` works end-to-end
 - [ ] Zotero add/collections/new functional with valid credentials
 
 ### Quality Criteria
 
 - [ ] Unit test coverage ≥ 80% for `core/` modules
 - [ ] All commands have `--help` text with usage example
-- [ ] `lumen doctor` catches missing credentials and unreachable services
+- [ ] `orbitr doctor` catches missing credentials and unreachable services
 - [ ] No unhandled exceptions surface to the user — all errors caught and formatted
 
 ### Adoption Criteria
 
 - [ ] Installable with a single `uv tool install` command
-- [ ] `lumen init` completes setup in under 2 minutes for a new user
+- [ ] `orbitr init` completes setup in under 2 minutes for a new user
 - [ ] Shell completions installable for Zsh, Bash, and Fish

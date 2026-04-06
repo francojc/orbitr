@@ -1,6 +1,6 @@
 # Development Implementation Details
 
-**Project:** lumen
+**Project:** orbitr
 **Status:** Phase 4 complete — Phase 5 starting
 **Last Updated:** 2026-04-06
 
@@ -16,7 +16,7 @@
 ### Component Overview
 
 ```
-lumen/
+orbitr/
 ├── pyproject.toml
 ├── flake.nix
 ├── .gitignore
@@ -25,21 +25,21 @@ lumen/
 ├── specs/               # Planning, progress, implementation docs
 ├── logs/                # Session and weekly review logs
 ├── src/
-│   └── lumen/
+│   └── orbitr/
 │       ├── __init__.py
 │       ├── cli.py           # Typer app root; global flags; command tree
 │       ├── config.py        # Layered config: flags > env > file > defaults
 │       ├── commands/
-│       │   ├── search.py    # lumen search (keyword + field filters)
-│       │   ├── paper.py     # lumen paper, lumen cite
-│       │   ├── author.py    # lumen author
-│       │   ├── recommend.py # lumen recommend
-│       │   ├── query.py     # lumen query
-│       │   ├── export.py    # lumen export
-│       │   ├── zotero.py    # lumen zotero add / collections / new
-│       │   ├── cache.py     # lumen cache stats / clean / clear
-│       │   ├── init.py      # lumen init
-│       │   └── doctor.py    # lumen doctor
+│       │   ├── search.py    # orbitr search (keyword + field filters)
+│       │   ├── paper.py     # orbitr paper, orbitr cite
+│       │   ├── author.py    # orbitr author
+│       │   ├── recommend.py # orbitr recommend
+│       │   ├── query.py     # orbitr query
+│       │   ├── export.py    # orbitr export
+│       │   ├── zotero.py    # orbitr zotero add / collections / new
+│       │   ├── cache.py     # orbitr cache stats / clean / clear
+│       │   ├── init.py      # orbitr init
+│       │   └── doctor.py    # orbitr doctor
 │       ├── clients/
 │       │   ├── base.py              # Abstract base client (retry, rate limit)
 │       │   ├── arxiv.py             # arXiv Atom feed client
@@ -75,16 +75,16 @@ lumen/
     ├── test_deduplication.py        # deduplicate, _merge, helpers (24 tests)
     ├── test_ranking.py              # rank, scoring functions (22 tests)
     ├── test_cache.py                # Cache get/set/clean/clear/stats (19 tests)
-    ├── test_search.py               # lumen search CLI integration (25 tests)
-    ├── test_cache_cmd.py            # lumen cache CLI integration (15 tests)
-    ├── test_paper.py                # lumen paper unit + CLI integration
-    ├── test_recommend.py            # lumen recommend CLI integration (9 tests)
-    ├── test_author.py               # lumen author CLI integration (9 tests)
-    ├── test_export.py               # core/export unit (25) + lumen export CLI (8)
-    ├── test_init.py                 # lumen init CLI integration (8 tests)
-    ├── test_doctor.py               # lumen doctor CLI integration (13 tests)
-    ├── test_query.py                # lumen query unit + CLI integration (16 tests)
-    ├── test_zotero.py               # lumen zotero CLI integration (18 tests)
+    ├── test_search.py               # orbitr search CLI integration (25 tests)
+    ├── test_cache_cmd.py            # orbitr cache CLI integration (15 tests)
+    ├── test_paper.py                # orbitr paper unit + CLI integration
+    ├── test_recommend.py            # orbitr recommend CLI integration (9 tests)
+    ├── test_author.py               # orbitr author CLI integration (9 tests)
+    ├── test_export.py               # core/export unit (25) + orbitr export CLI (8)
+    ├── test_init.py                 # orbitr init CLI integration (8 tests)
+    ├── test_doctor.py               # orbitr doctor CLI integration (13 tests)
+    ├── test_query.py                # orbitr query unit + CLI integration (16 tests)
+    ├── test_zotero.py               # orbitr zotero CLI integration (18 tests)
     └── test_display_phase4.py       # detail renderer + effective_format + render() dispatch (33 tests)
 ```
 
@@ -143,7 +143,7 @@ lumen/
    - **Tiers and TTLs:** `search` 3600 s · `paper` 86400 s · `citations` 21600 s
    - **Schema versioning:** `meta` table stores `schema_version`; mismatch triggers silent wipe and rebuild
    - **Storage:** values serialised with `json.dumps`; `expires_at` stored as Unix float
-   - **Location:** `~/.cache/lumen/cache.db` (XDG); overridable via `db_path` constructor arg
+   - **Location:** `~/.cache/orbitr/cache.db` (XDG); overridable via `db_path` constructor arg
    - **Dependencies:** `sqlite3` (stdlib), `json`, `time`
 
 8. **`core/query.py`** *(Phase 3 — complete)*
@@ -171,12 +171,12 @@ lumen/
     - **Public Interface:** `render_list(papers, console=None) -> None`
 
 12. **`display/json_fmt.py`** *(Phase 3 — complete)*
-    - **Purpose:** Writes papers as newline-delimited JSON (ndjson) for piping to `jq` or `lumen export`
+    - **Purpose:** Writes papers as newline-delimited JSON (ndjson) for piping to `jq` or `orbitr export`
     - **Serialisation:** `Paper.model_dump_json()` — one JSON object per line, no wrapper array
     - **Public Interface:** `render_json(papers, file=None) -> None`
 
 13. **`commands/search.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen search`; orchestrates the full query pipeline
+    - **Purpose:** Implements `orbitr search`; orchestrates the full query pipeline
     - **Typer command:** `search(ctx, query, sources, limit, title, author, venue, year_from, year_to, sort, fmt, no_cache)`
     - **Async inner function:** `_search_async(...)` called via `_async.run()`; `_fetch_source(...)` handles per-source cache + client call
     - **Pipeline:** `parse_query` → `build_*_query` per source → `asyncio.gather(_fetch_source(...))` → year post-filter → `deduplicate` → `rank` → `render`
@@ -185,7 +185,7 @@ lumen/
     - **Dependencies:** all clients, `core/query.py`, `core/cache.py`, `core/deduplication.py`, `core/ranking.py`, `display/`
 
 13. **`commands/cache.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen cache stats/clean/clear` as Typer subcommands
+    - **Purpose:** Implements `orbitr cache stats/clean/clear` as Typer subcommands
     - **`stats`:** renders a Rich Table of entries per tier, total count, db path, and file size
     - **`clean`:** removes expired entries; accepts optional `--tier` filter; reports count removed
     - **`clear`:** removes all entries with `--yes` bypass or interactive confirmation prompt; tier-specific or full
@@ -193,26 +193,26 @@ lumen/
     - **Dependencies:** `core/cache.py`
 
 14. **`commands/paper.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen paper <id>` — fetch a single paper by any recognized ID format
+    - **Purpose:** Implements `orbitr paper <id>` — fetch a single paper by any recognized ID format
     - **`_detect_id_type(id)`:** classifies IDs as `arxiv` (bare, versioned, URL, `arXiv:` prefix), `doi` (bare, `doi.org` URL, `DOI:` prefix), `semantic_scholar` (40-char hex), or `unknown`
     - **`_normalize_for_ss(id, id_type)`:** builds SS-compatible `ARXIV:`, `DOI:`, or bare SS ID strings
     - **Routing:** arXiv IDs → `ArxivClient.get_by_id()`; all others → `SemanticScholarClient.get_by_id()`
-    - **`fetch_paper(id, config, cache)`:** shared async helper (returns `Paper` without rendering); used by `lumen zotero add`
+    - **`fetch_paper(id, config, cache)`:** shared async helper (returns `Paper` without rendering); used by `orbitr zotero add`
     - **Cache:** tier `paper`; key `paper:{source}:{id}`
     - **Dependencies:** both clients, `core/cache.py`, `display/`
 
 15. **`commands/recommend.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen recommend <id>` — content-based or citation-based recommendations
+    - **Purpose:** Implements `orbitr recommend <id>` — content-based or citation-based recommendations
     - **`--method`:** `content`, `citation`, or `hybrid`; all currently route to SS `get_recommendations()` (method distinctions reserved for v1.1 with ML embeddings)
     - **ID handling:** reuses `_detect_id_type` / `_normalize_for_ss` from `commands/paper`
     - **Cache:** tier `search`; cache key incorporates method and limit
     - **Dependencies:** `clients/semantic_scholar.py`, `core/cache.py`, `display/`
 
 16. **`commands/author.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen author <name>` — find papers by an author
+    - **Purpose:** Implements `orbitr author <name>` — find papers by an author
     - **Pipeline:** `SemanticScholarClient.search_authors(name, limit)` → rank → render
     - **Cache:** tier `search`; key `author:{name}:{limit}`
-    - **Error handling:** same pattern as `lumen cite` (SourceError → exit 1, NoResultsError → exit 4)
+    - **Error handling:** same pattern as `orbitr cite` (SourceError → exit 1, NoResultsError → exit 4)
     - **Dependencies:** `clients/semantic_scholar.py`, `core/ranking.py`, `core/cache.py`, `display/`
 
 17. **`core/export.py`** *(Phase 3 — complete)*
@@ -223,17 +223,17 @@ lumen/
     - **Dependencies:** `core/models.py`, `json` (stdlib)
 
 18. **`commands/export.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen export` — convert papers to bibliography format
-    - **Stdin path:** reads ndjson lines from stdin (piped from `lumen search --format json`); parses with `Paper.model_validate_json()`
-    - **`--query` path:** runs concurrent arXiv + SS search (same pipeline as `lumen search`), deduplicates, then formats
+    - **Purpose:** Implements `orbitr export` — convert papers to bibliography format
+    - **Stdin path:** reads ndjson lines from stdin (piped from `orbitr search --format json`); parses with `Paper.model_validate_json()`
+    - **`--query` path:** runs concurrent arXiv + SS search (same pipeline as `orbitr search`), deduplicates, then formats
     - **`--output`:** writes to file; defaults to stdout
     - **Format dispatch:** `bibtex` → `to_bibtex`; `ris` → `to_ris`; `csl-json` → `to_csl_json`
     - **Exit codes:** 2 on invalid format or non-TTY stdin with no data; 4 on empty result set
 
 19. **`commands/query.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen query <natural-language>` — heuristic NL-to-query-syntax helper
+    - **Purpose:** Implements `orbitr query <natural-language>` — heuristic NL-to-query-syntax helper
     - **`_parse_natural(text)`:** extracts 4-digit year, author surname (capitalized token immediately before year, filtered against stop words), and remaining tokens as keyword terms (stop words removed)
-    - **`_build_command(parsed)`:** renders a `lumen search ...` command string with flags for each extracted field
+    - **`_build_command(parsed)`:** renders a `orbitr search ...` command string with flags for each extracted field
     - **`--run`:** invokes `search` command in-process via `ctx.invoke` with parsed kwargs; prints command first
     - **Dependencies:** `commands/search.py` (for `--run`), `re` (stdlib)
 
@@ -259,7 +259,7 @@ lumen/
     - **`_render_rich(papers, fmt, con)`:** internal dispatcher extracted to support pager wrapping cleanly.
 
 21. **`commands/zotero.py`** *(Phase 3 — complete)*
-    - **Purpose:** Implements `lumen zotero add/collections/new` subcommands
+    - **Purpose:** Implements `orbitr zotero add/collections/new` subcommands
     - **`add <id>`:** fetches paper via `fetch_paper()`, resolves optional `--collection` by name, builds tag list from categories + `--tags`, calls `ZoteroClient.add_paper()`; reports item key
     - **`collections`:** lists all Zotero collections as Rich table (`key`, `name`, `parent`) or json
     - **`new <name>`:** optional `--parent` (resolved by name via `find_collection_key`); calls `create_collection()`; reports new key
@@ -297,7 +297,7 @@ class SearchResult(BaseModel):
     sources: list[str]
 ```
 
-- **Persistence:** SQLite at `~/.cache/lumen/cache.db`
+- **Persistence:** SQLite at `~/.cache/orbitr/cache.db`
 - **Serialization:** Pydantic `.model_dump_json()` for cache storage; custom formatters in `core/export.py` for bibliography output
 - **Migration:** Cache schema versioned; on version mismatch, cache is wiped and rebuilt transparently
 
@@ -311,7 +311,7 @@ common tasks.
 
 ```bash
 # Clone and enter the project
-git clone <repo-url> lumen && cd lumen
+git clone <repo-url> orbitr && cd orbitr
 
 # direnv activates the flake shell automatically (Python 3.12, uv, ruff, pyright)
 # If direnv is not installed, enter manually:
@@ -321,7 +321,7 @@ nix develop
 just setup
 
 # Verify
-lumen --version
+orbitr --version
 ```
 
 The `.envrc` contains `use flake .` — this ensures `uv sync` always runs against the
@@ -330,7 +330,7 @@ flake-pinned Python, not whatever Python happens to be on `$PATH`.
 ### Build and Run
 
 ```bash
-just run -- --help        # uv run lumen --help
+just run -- --help        # uv run orbitr --help
 just install              # uv tool install . (production-style)
 just install-dev          # uv tool install --editable . (changes take effect immediately)
 just build                # uv build — produces dist/ wheel + sdist
@@ -381,7 +381,7 @@ just test-v                             # verbose output
 
 - **Platform:** Local user install; distributed via PyPI and/or `uv tool install` from git
 - **Runtime:** Python 3.10+ on macOS and Linux
-- **Configuration:** `~/.config/lumen/config.toml` and environment variables; no server-side config
+- **Configuration:** `~/.config/orbitr/config.toml` and environment variables; no server-side config
 
 ### CI/CD Pipeline
 
@@ -442,7 +442,7 @@ except SourceError as e:
 
 ### Secret Management
 
-- Credentials stored in `~/.config/lumen/config.toml` under `[credentials]`; file created with `0600` permissions via `lumen init`
+- Credentials stored in `~/.config/orbitr/config.toml` under `[credentials]`; file created with `0600` permissions via `orbitr init`
 - Credentials read at startup and injected into clients; never logged, never included in JSON output or error messages
 - `LUMEN_` env vars are an alternative to the config file; take precedence
 

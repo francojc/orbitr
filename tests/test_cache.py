@@ -1,4 +1,4 @@
-"""Unit tests for lumen.core.cache."""
+"""Unit tests for orbitr.core.cache."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from lumen.core.cache import _SCHEMA_VERSION, Cache
+from orbitr.core.cache import _SCHEMA_VERSION, Cache
 
 # ---------------------------------------------------------------------------
 # Fixture: isolated in-memory-style cache using tmp_path

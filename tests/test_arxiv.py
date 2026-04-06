@@ -1,4 +1,4 @@
-"""Unit tests for lumen.clients.arxiv.ArxivClient."""
+"""Unit tests for orbitr.clients.arxiv.ArxivClient."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from lumen.clients.arxiv import ArxivClient, _parse_arxiv_id
-from lumen.exceptions import SourceError
+from orbitr.clients.arxiv import ArxivClient, _parse_arxiv_id
+from orbitr.exceptions import SourceError
 
 # ---------------------------------------------------------------------------
 # Fixtures directory

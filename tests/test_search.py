@@ -1,9 +1,9 @@
-"""Integration tests for lumen search command.
+"""Integration tests for orbitr search command.
 
 Strategy
 --------
 - Use Typer's ``CliRunner`` against the full ``app`` object.
-- Patch ``lumen.config.load_config`` to inject a deterministic ``Config``
+- Patch ``orbitr.config.load_config`` to inject a deterministic ``Config``
   with ``no_cache=True`` so tests never read or write disk.
 - Patch ``ArxivClient.search`` and ``SemanticScholarClient.search`` to
   return fixture-based ``SearchResult`` objects — no live network calls.
@@ -17,10 +17,10 @@ from unittest.mock import AsyncMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
-from lumen.core.models import Author, Paper, SearchResult
-from lumen.exceptions import SourceError
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
+from orbitr.core.models import Author, Paper, SearchResult
+from orbitr.exceptions import SourceError
 
 runner = CliRunner()
 
@@ -87,7 +87,7 @@ def _result(
 def _invoke(*args: str, config: Config | None = None):
     """Invoke the CLI with patched load_config and return the result."""
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -103,8 +103,8 @@ class TestSearchBasic:
         ss_mock = AsyncMock(return_value=_result([], sources=["semantic_scholar"]))
 
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -122,8 +122,8 @@ class TestSearchBasic:
         ss_mock = AsyncMock(return_value=_result([], sources=["semantic_scholar"]))
 
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -143,8 +143,8 @@ class TestSearchFormats:
         arxiv_mock = AsyncMock(return_value=_result(papers, sources=["arxiv"]))
         ss_mock = AsyncMock(return_value=_result([], sources=["semantic_scholar"]))
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -179,7 +179,7 @@ class TestSearchSources:
     def test_single_source_arxiv(self):
         papers = [_paper("ArXiv Only")]
         arxiv_mock = AsyncMock(return_value=_result(papers, sources=["arxiv"]))
-        with patch("lumen.commands.search.ArxivClient") as mock_ax_cls:
+        with patch("orbitr.commands.search.ArxivClient") as mock_ax_cls:
             mock_ax_cls.return_value.search = arxiv_mock
             result = _invoke("search", "test", "--no-cache", "--sources", "arxiv")
 
@@ -211,8 +211,8 @@ class TestSearchSort:
             arxiv_mock = AsyncMock(return_value=_result(papers, sources=["arxiv"]))
             ss_mock = AsyncMock(return_value=_result([], sources=["semantic_scholar"]))
             with (
-                patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-                patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+                patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+                patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
             ):
                 mock_ax_cls.return_value.search = arxiv_mock
                 mock_ss_cls.return_value.search = ss_mock
@@ -229,8 +229,8 @@ class TestSearchNoResults:
     def test_empty_results_exits_4(self):
         empty = AsyncMock(return_value=_result([], sources=["arxiv"]))
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = empty
             mock_ss_cls.return_value.search = AsyncMock(
@@ -252,8 +252,8 @@ class TestSearchSourceError:
             side_effect=SourceError("API down", suggestion="Try later.")
         )
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = err_mock
             mock_ss_cls.return_value.search = err_mock
@@ -268,8 +268,8 @@ class TestSearchSourceError:
         ss_mock = AsyncMock(side_effect=SourceError("SS down", suggestion=""))
 
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -299,8 +299,8 @@ class TestSearchDedup:
         )
 
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -325,8 +325,8 @@ class TestSearchCache:
         ss_mock = AsyncMock(return_value=_result([], sources=["semantic_scholar"]))
 
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -349,8 +349,8 @@ class TestSearchYearFilter:
         ss_mock = AsyncMock(return_value=_result([], sources=["semantic_scholar"]))
 
         with (
-            patch("lumen.commands.search.ArxivClient") as mock_ax_cls,
-            patch("lumen.commands.search.SemanticScholarClient") as mock_ss_cls,
+            patch("orbitr.commands.search.ArxivClient") as mock_ax_cls,
+            patch("orbitr.commands.search.SemanticScholarClient") as mock_ss_cls,
         ):
             mock_ax_cls.return_value.search = arxiv_mock
             mock_ss_cls.return_value.search = ss_mock
@@ -372,28 +372,28 @@ class TestSearchYearFilter:
 
 class TestQueryHelpers:
     def test_parse_query_extracts_title(self):
-        from lumen.core.query import parse_query
+        from orbitr.core.query import parse_query
 
         base, filters = parse_query('BERT title:"contextual embeddings"')
         assert base.strip() == "BERT"
         assert filters["title"] == "contextual embeddings"
 
     def test_parse_query_extracts_author(self):
-        from lumen.core.query import parse_query
+        from orbitr.core.query import parse_query
 
         base, filters = parse_query("transformers author:Vaswani")
         assert "transformers" in base
         assert filters["author"] == "Vaswani"
 
     def test_parse_query_no_filters(self):
-        from lumen.core.query import parse_query
+        from orbitr.core.query import parse_query
 
         base, filters = parse_query("neural machine translation")
         assert base == "neural machine translation"
         assert filters == {}
 
     def test_build_arxiv_query_with_filters(self):
-        from lumen.core.query import build_arxiv_query
+        from orbitr.core.query import build_arxiv_query
 
         q = build_arxiv_query("BERT", {"title": "contextual", "author": "Devlin"})
         assert "all:BERT" in q
@@ -402,7 +402,7 @@ class TestQueryHelpers:
         assert "AND" in q
 
     def test_build_ss_query_flattens_filters(self):
-        from lumen.core.query import build_ss_query
+        from orbitr.core.query import build_ss_query
 
         q = build_ss_query("BERT", {"title": "contextual", "author": "Devlin"})
         assert "BERT" in q
@@ -410,7 +410,7 @@ class TestQueryHelpers:
         assert "Devlin" in q
 
     def test_cache_key_is_deterministic(self):
-        from lumen.core.query import cache_key
+        from orbitr.core.query import cache_key
 
         k1 = cache_key("arxiv", "all:BERT", 10, "relevance")
         k2 = cache_key("arxiv", "all:BERT", 10, "relevance")
@@ -418,14 +418,14 @@ class TestQueryHelpers:
         assert k1.startswith("search:arxiv:")
 
     def test_cache_key_differs_for_different_queries(self):
-        from lumen.core.query import cache_key
+        from orbitr.core.query import cache_key
 
         k1 = cache_key("arxiv", "all:BERT", 10, "relevance")
         k2 = cache_key("arxiv", "all:GPT", 10, "relevance")
         assert k1 != k2
 
     def test_in_year_range(self):
-        from lumen.core.query import in_year_range
+        from orbitr.core.query import in_year_range
 
         assert in_year_range(2020, 2015, 2023)
         assert not in_year_range(2010, 2015, 2023)
@@ -433,7 +433,7 @@ class TestQueryHelpers:
         assert in_year_range(2020, None, None)  # open bounds always pass
 
     def test_ss_year_param(self):
-        from lumen.core.query import ss_year_param
+        from orbitr.core.query import ss_year_param
 
         assert ss_year_param(2017, 2022) == "2017-2022"
         assert ss_year_param(2017, None) == "2017-"

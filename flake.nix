@@ -1,5 +1,5 @@
 {
-  description = "lumen — academic literature search CLI";
+  description = "orbitr — academic literature search CLI";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -31,7 +31,7 @@
         buildInputs = allPackages;
 
         shellHook = ''
-          echo "lumen dev environment loaded"
+          echo "orbitr dev environment loaded"
           echo "Python: $(python --version)"
           echo "uv:     $(uv --version)"
           echo ""

@@ -1,8 +1,8 @@
-# lumen — Agent Project Context
+# orbitr — Agent Project Context
 
 ## Software Purpose
 
-`lumen` is a Python CLI tool for academic literature search and reference management. It queries arXiv, Semantic Scholar, and Google Scholar concurrently, deduplicates and ranks results, and integrates with the Zotero reference manager. Target users: researchers, academics, and students who prefer terminal-based workflows.
+`orbitr` is a Python CLI tool for academic literature search and reference management. It queries arXiv, Semantic Scholar, and Google Scholar concurrently, deduplicates and ranks results, and integrates with the Zotero reference manager. Target users: researchers, academics, and students who prefer terminal-based workflows.
 
 ## Architecture Overview
 
@@ -10,13 +10,13 @@ CLI pipeline: command dispatch → concurrent async API clients → core process
 
 **Key components:**
 
-- `src/lumen/cli.py` — Typer root app; global flags; injects config into context
-- `src/lumen/config.py` — layered config: CLI flags > env vars > `~/.config/lumen/config.toml` > defaults
-- `src/lumen/commands/` — one module per command (`search`, `paper`, `cite`, `author`, `recommend`, `export`, `query`, `zotero`, `cache`, `init`, `doctor`)
-- `src/lumen/clients/` — async httpx clients: `arxiv.py`, `semantic_scholar.py`; all extend `base.py` (retry, rate limiting, circuit break); Google Scholar deferred to v1.1
-- `src/lumen/core/` — `models.py` (Pydantic), `deduplication.py`, `ranking.py`, `cache.py` (SQLite), `export.py` (BibTeX/RIS/CSL-JSON)
-- `src/lumen/zotero/client.py` — pyzotero wrapper
-- `src/lumen/display/` — `table.py`, `list.py`, `detail.py`, `json_fmt.py`
+- `src/orbitr/cli.py` — Typer root app; global flags; injects config into context
+- `src/orbitr/config.py` — layered config: CLI flags > env vars > `~/.config/orbitr/config.toml` > defaults
+- `src/orbitr/commands/` — one module per command (`search`, `paper`, `cite`, `author`, `recommend`, `export`, `query`, `zotero`, `cache`, `init`, `doctor`)
+- `src/orbitr/clients/` — async httpx clients: `arxiv.py`, `semantic_scholar.py`; all extend `base.py` (retry, rate limiting, circuit break); Google Scholar deferred to v1.1
+- `src/orbitr/core/` — `models.py` (Pydantic), `deduplication.py`, `ranking.py`, `cache.py` (SQLite), `export.py` (BibTeX/RIS/CSL-JSON)
+- `src/orbitr/zotero/client.py` — pyzotero wrapper
+- `src/orbitr/display/` — `table.py`, `list.py`, `detail.py`, `json_fmt.py`
 
 ## Dev Environment
 
@@ -27,7 +27,7 @@ all common workflow recipes.
 Entry point:
 
 ```bash
-cd lumen          # direnv runs `use flake .` — activates pinned shell
+cd orbitr          # direnv runs `use flake .` — activates pinned shell
 just setup        # uv sync inside the flake environment
 ```
 
@@ -37,7 +37,7 @@ Without direnv: `nix develop` then `just setup`.
 
 ```bash
 just setup        # uv sync — install deps and editable package
-just run -- --help           # run lumen via uv run
+just run -- --help           # run orbitr via uv run
 just build        # uv build — produces dist/ wheel + sdist
 
 just fmt          # ruff format src/ tests/
@@ -71,7 +71,7 @@ Run `just` with no arguments to list all recipes.
 ## Directory Structure
 
 ```
-lumen/
+orbitr/
 ├── pyproject.toml
 ├── flake.nix
 ├── CLAUDE.md
@@ -79,7 +79,7 @@ lumen/
 ├── .env.example
 ├── specs/               # planning.md, progress.md, implementation.md
 ├── logs/                # session and weekly review logs
-├── src/lumen/           # source package
+├── src/orbitr/           # source package
 ├── tests/               # pytest suite + fixtures/
 └── .gitignore
 ```
@@ -97,8 +97,8 @@ lumen/
 ## Key Conventions
 
 - **Exit codes:** 0 success, 1 general error, 2 usage error, 3 config error, 4 no results
-- **Config path:** `~/.config/lumen/config.toml` (XDG); cache at `~/.cache/lumen/`
-- **Credentials file permissions:** `0600` — enforced in `lumen init`
+- **Config path:** `~/.config/orbitr/config.toml` (XDG); cache at `~/.cache/orbitr/`
+- **Credentials file permissions:** `0600` — enforced in `orbitr init`
 - **TTY detection:** when stdout is not a TTY, default `--format` to `json` automatically
 - **`NO_COLOR`** env var disables all Rich color; `--no-color` flag does the same
 - **Async in Typer:** wrap async work in `asyncio.run()` at the command level; no persistent event loop

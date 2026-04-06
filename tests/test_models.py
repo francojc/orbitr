@@ -1,4 +1,4 @@
-"""Unit tests for lumen.core.models: Paper, Author, SearchResult."""
+"""Unit tests for orbitr.core.models: Paper, Author, SearchResult."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import ValidationError
 
-from lumen.core.models import Author, Paper, SearchResult
+from orbitr.core.models import Author, Paper, SearchResult
 
 # ---------------------------------------------------------------------------
 # Author

@@ -1,4 +1,4 @@
-"""Integration tests for lumen init command."""
+"""Integration tests for orbitr init command."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
 
 runner = CliRunner()
 
@@ -33,7 +33,7 @@ def _invoke(*args: str, config: Config | None = None, prompts: list[str] | None 
     by a Confirm.ask return value (True/False).
     """
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -47,12 +47,12 @@ def _run_init(
     confirm_value: bool = True,
     config: Config | None = None,
 ) -> object:
-    """Run `lumen init` with mocked Rich prompts."""
+    """Run `orbitr init` with mocked Rich prompts."""
     cfg = config or _test_config()
     with (
-        patch("lumen.config.load_config", return_value=cfg),
+        patch("orbitr.config.load_config", return_value=cfg),
         patch(
-            "lumen.commands.init.write_config", return_value=Path("/tmp/config.toml")
+            "orbitr.commands.init.write_config", return_value=Path("/tmp/config.toml")
         ),
         patch("rich.prompt.Prompt.ask", side_effect=prompt_values),
         patch("rich.prompt.Confirm.ask", return_value=confirm_value),
@@ -74,9 +74,9 @@ class TestInitSave:
 
     def test_writes_config(self):
         with (
-            patch("lumen.config.load_config", return_value=_test_config()),
+            patch("orbitr.config.load_config", return_value=_test_config()),
             patch(
-                "lumen.commands.init.write_config",
+                "orbitr.commands.init.write_config",
                 return_value=Path("/tmp/config.toml"),
             ) as mock_write,
             patch(
@@ -103,8 +103,8 @@ class TestInitSave:
             return Path("/tmp/config.toml")
 
         with (
-            patch("lumen.config.load_config", return_value=_test_config()),
-            patch("lumen.commands.init.write_config", side_effect=capture_write),
+            patch("orbitr.config.load_config", return_value=_test_config()),
+            patch("orbitr.commands.init.write_config", side_effect=capture_write),
             patch(
                 "rich.prompt.Prompt.ask",
                 side_effect=["my-ss-key", "my-uid", "my-zot-key", "10", "table"],
@@ -127,8 +127,8 @@ class TestInitSave:
             return Path("/tmp/config.toml")
 
         with (
-            patch("lumen.config.load_config", return_value=_test_config()),
-            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch("orbitr.config.load_config", return_value=_test_config()),
+            patch("orbitr.commands.init.write_config", side_effect=capture),
             patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "25", "list"]),
             patch("rich.prompt.Confirm.ask", return_value=True),
         ):
@@ -147,8 +147,8 @@ class TestInitSave:
 class TestInitAbort:
     def test_abort_does_not_write(self):
         with (
-            patch("lumen.config.load_config", return_value=_test_config()),
-            patch("lumen.commands.init.write_config") as mock_write,
+            patch("orbitr.config.load_config", return_value=_test_config()),
+            patch("orbitr.commands.init.write_config") as mock_write,
             patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
             patch("rich.prompt.Confirm.ask", return_value=False),
         ):
@@ -187,8 +187,8 @@ class TestInitRerun:
 
         # User presses Enter for all prompts — keeps existing values
         with (
-            patch("lumen.config.load_config", return_value=existing),
-            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch("orbitr.config.load_config", return_value=existing),
+            patch("orbitr.commands.init.write_config", side_effect=capture),
             patch(
                 "rich.prompt.Prompt.ask",
                 side_effect=[
@@ -219,14 +219,14 @@ class TestInitEnvVarCredentials:
         """Note about active env var is shown to the user."""
         with (
             patch.dict("os.environ", {"SEMANTIC_SCHOLAR_API_KEY": "env-key"}),
-            patch("lumen.config.load_config", return_value=_test_config()),
+            patch("orbitr.config.load_config", return_value=_test_config()),
             patch(
-                "lumen.commands.init.write_config",
+                "orbitr.commands.init.write_config",
                 return_value=Path("/tmp/config.toml"),
             ),
             patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
             patch("rich.prompt.Confirm.ask", return_value=True),
-            patch("lumen.config._load_toml", return_value={}),
+            patch("orbitr.config._load_toml", return_value={}),
         ):
             result = runner.invoke(app, ["init"])
         assert "SEMANTIC_SCHOLAR_API_KEY" in result.output
@@ -245,14 +245,14 @@ class TestInitEnvVarCredentials:
 
         with (
             patch.dict("os.environ", {"SEMANTIC_SCHOLAR_API_KEY": "env-key"}),
-            patch("lumen.config.load_config", return_value=_test_config()),
-            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch("orbitr.config.load_config", return_value=_test_config()),
+            patch("orbitr.commands.init.write_config", side_effect=capture),
             # User leaves SS prompt blank, fills Zotero, accepts defaults
             patch(
                 "rich.prompt.Prompt.ask", side_effect=["", "uid", "zot", "10", "table"]
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
-            patch("lumen.config._load_toml", return_value=existing_toml),
+            patch("orbitr.config._load_toml", return_value=existing_toml),
         ):
             runner.invoke(app, ["init"])
 
@@ -271,14 +271,14 @@ class TestInitEnvVarCredentials:
 
         with (
             patch.dict("os.environ", {"SEMANTIC_SCHOLAR_API_KEY": "env-key"}),
-            patch("lumen.config.load_config", return_value=_test_config()),
-            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch("orbitr.config.load_config", return_value=_test_config()),
+            patch("orbitr.commands.init.write_config", side_effect=capture),
             patch(
                 "rich.prompt.Prompt.ask",
                 side_effect=["new-explicit-key", "uid", "zot", "10", "table"],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
-            patch("lumen.config._load_toml", return_value={}),
+            patch("orbitr.config._load_toml", return_value={}),
         ):
             runner.invoke(app, ["init"])
 
@@ -292,14 +292,14 @@ class TestInitEnvVarCredentials:
                 "os.environ",
                 {"ZOTERO_USER_ID": "env-uid", "ZOTERO_API_KEY": "env-zot"},
             ),
-            patch("lumen.config.load_config", return_value=_test_config()),
+            patch("orbitr.config.load_config", return_value=_test_config()),
             patch(
-                "lumen.commands.init.write_config",
+                "orbitr.commands.init.write_config",
                 return_value=Path("/tmp/config.toml"),
             ),
             patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
             patch("rich.prompt.Confirm.ask", return_value=True),
-            patch("lumen.config._load_toml", return_value={}),
+            patch("orbitr.config._load_toml", return_value={}),
         ):
             result = runner.invoke(app, ["init"])
         assert "ZOTERO_USER_ID" in result.output or "ZOTERO_API_KEY" in result.output
@@ -329,14 +329,14 @@ class TestInitEnvVarCredentials:
         }
         with (
             patch.dict(os.environ, safe_env, clear=True),
-            patch("lumen.config.load_config", return_value=existing),
-            patch("lumen.commands.init.write_config", side_effect=capture),
+            patch("orbitr.config.load_config", return_value=existing),
+            patch("orbitr.commands.init.write_config", side_effect=capture),
             patch(
                 "rich.prompt.Prompt.ask",
                 side_effect=["config-key", "config-uid", "config-zot", "10", "table"],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
-            patch("lumen.config._load_toml", return_value={}),
+            patch("orbitr.config._load_toml", return_value={}),
         ):
             runner.invoke(app, ["init"])
 

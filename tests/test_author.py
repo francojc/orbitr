@@ -1,4 +1,4 @@
-"""Integration tests for lumen author command."""
+"""Integration tests for orbitr author command."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
-from lumen.core.models import Author, Paper
-from lumen.exceptions import SourceError
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
+from orbitr.core.models import Author, Paper
+from orbitr.exceptions import SourceError
 
 runner = CliRunner()
 
@@ -40,7 +40,7 @@ def _paper(title: str = "Bengio Paper", n: int = 0) -> Paper:
 
 def _invoke(*args: str, config: Config | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -53,7 +53,7 @@ class TestAuthorOutput:
     def test_returns_papers(self):
         papers = [_paper(f"Paper {i}", i) for i in range(5)]
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.return_value = papers
@@ -63,7 +63,7 @@ class TestAuthorOutput:
 
     def test_author_name_passed_to_client(self):
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.return_value = [_paper()]
@@ -73,7 +73,7 @@ class TestAuthorOutput:
 
     def test_limit_passed_to_client(self):
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.return_value = [_paper()]
@@ -83,7 +83,7 @@ class TestAuthorOutput:
 
     def test_json_format(self):
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.return_value = [_paper(title="LeCun Vision Paper")]
@@ -94,7 +94,7 @@ class TestAuthorOutput:
 
     def test_title_in_output(self):
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.return_value = [_paper(title="Unique Title ABC")]
@@ -110,7 +110,7 @@ class TestAuthorOutput:
 class TestAuthorErrors:
     def test_no_results_exits_4(self):
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.return_value = []
@@ -119,7 +119,7 @@ class TestAuthorErrors:
 
     def test_source_error_exits_1(self):
         with patch(
-            "lumen.commands.author.SemanticScholarClient.search_authors",
+            "orbitr.commands.author.SemanticScholarClient.search_authors",
             new_callable=AsyncMock,
         ) as mock_sa:
             mock_sa.side_effect = SourceError("No author found.")
@@ -142,9 +142,9 @@ class TestAuthorCache:
         mock_cache = MagicMock()
         mock_cache.get.return_value = [json.loads(p.model_dump_json())]
         with (
-            patch("lumen.commands.author.Cache", return_value=mock_cache),
+            patch("orbitr.commands.author.Cache", return_value=mock_cache),
             patch(
-                "lumen.commands.author.SemanticScholarClient.search_authors",
+                "orbitr.commands.author.SemanticScholarClient.search_authors",
                 new_callable=AsyncMock,
             ) as mock_sa,
         ):

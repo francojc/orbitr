@@ -1,4 +1,4 @@
-"""Integration tests for lumen recommend command."""
+"""Integration tests for orbitr recommend command."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.config import Config, Credentials
-from lumen.core.models import Author, Paper
-from lumen.exceptions import SourceError
+from orbitr.cli import app
+from orbitr.config import Config, Credentials
+from orbitr.core.models import Author, Paper
+from orbitr.exceptions import SourceError
 
 runner = CliRunner()
 
@@ -40,7 +40,7 @@ def _paper(title: str = "Recommended Paper", n: int = 0) -> Paper:
 
 def _invoke(*args: str, config: Config | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -53,7 +53,7 @@ class TestRecommendOutput:
     def test_returns_papers(self):
         papers = [_paper(f"Paper {i}", i) for i in range(3)]
         with patch(
-            "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+            "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
             new_callable=AsyncMock,
         ) as mock_rec:
             mock_rec.return_value = papers
@@ -63,7 +63,7 @@ class TestRecommendOutput:
 
     def test_uses_arxiv_prefix_for_arxiv_id(self):
         with patch(
-            "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+            "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
             new_callable=AsyncMock,
         ) as mock_rec:
             mock_rec.return_value = [_paper()]
@@ -73,7 +73,7 @@ class TestRecommendOutput:
 
     def test_json_format(self):
         with patch(
-            "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+            "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
             new_callable=AsyncMock,
         ) as mock_rec:
             mock_rec.return_value = [_paper(title="JSON Paper")]
@@ -84,7 +84,7 @@ class TestRecommendOutput:
 
     def test_limit_passed_to_client(self):
         with patch(
-            "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+            "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
             new_callable=AsyncMock,
         ) as mock_rec:
             mock_rec.return_value = [_paper()]
@@ -101,7 +101,7 @@ class TestRecommendOutput:
 class TestRecommendErrors:
     def test_no_results_exits_4(self):
         with patch(
-            "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+            "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
             new_callable=AsyncMock,
         ) as mock_rec:
             mock_rec.return_value = []
@@ -110,7 +110,7 @@ class TestRecommendErrors:
 
     def test_source_error_exits_1(self):
         with patch(
-            "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+            "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
             new_callable=AsyncMock,
         ) as mock_rec:
             mock_rec.side_effect = SourceError("API error.")
@@ -137,9 +137,9 @@ class TestRecommendCache:
         mock_cache = MagicMock()
         mock_cache.get.return_value = [json.loads(p.model_dump_json())]
         with (
-            patch("lumen.commands.recommend.Cache", return_value=mock_cache),
+            patch("orbitr.commands.recommend.Cache", return_value=mock_cache),
             patch(
-                "lumen.commands.recommend.SemanticScholarClient.get_recommendations",
+                "orbitr.commands.recommend.SemanticScholarClient.get_recommendations",
                 new_callable=AsyncMock,
             ) as mock_rec,
         ):

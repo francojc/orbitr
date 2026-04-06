@@ -1,4 +1,4 @@
-"""Tests for lumen query — NL parser and CLI command."""
+"""Tests for orbitr query — NL parser and CLI command."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from typer.testing import CliRunner
 
-from lumen.cli import app
-from lumen.commands.query import _build_command, _parse_natural
-from lumen.config import Config, Credentials
+from orbitr.cli import app
+from orbitr.commands.query import _build_command, _parse_natural
+from orbitr.config import Config, Credentials
 
 runner = CliRunner()
 
@@ -24,7 +24,7 @@ def _test_config(**overrides) -> Config:
 
 def _invoke(*args: str, config: Config | None = None):
     cfg = config or _test_config()
-    with patch("lumen.config.load_config", return_value=cfg):
+    with patch("orbitr.config.load_config", return_value=cfg):
         return runner.invoke(app, list(args))
 
 
@@ -92,7 +92,7 @@ class TestBuildCommand:
                 "year_to": None,
             }
         )
-        assert cmd == "lumen search transformers"
+        assert cmd == "orbitr search transformers"
 
     def test_multi_word_keywords_quoted(self):
         cmd = _build_command(
@@ -142,14 +142,14 @@ class TestBuildCommand:
                 "year_to": 2017,
             }
         )
-        assert cmd.startswith("lumen search")
+        assert cmd.startswith("orbitr search")
         assert "attention transformer" in cmd
         assert "Vaswani" in cmd
         assert "2017" in cmd
 
 
 # ---------------------------------------------------------------------------
-# CLI: lumen query
+# CLI: orbitr query
 # ---------------------------------------------------------------------------
 
 
@@ -157,7 +157,7 @@ class TestQueryCLI:
     def test_shows_generated_command(self):
         result = _invoke("query", "Vaswani 2017 attention transformer")
         assert result.exit_code == 0
-        assert "lumen search" in result.output
+        assert "orbitr search" in result.output
 
     def test_shows_keywords_in_command(self):
         result = _invoke("query", "contrastive learning NLP")
@@ -173,32 +173,32 @@ class TestQueryCLI:
         # --run should print the generated command, then invoke search.
         # We verify the generated command is shown and the search pipeline
         # is triggered by patching search's async inner function.
-        from lumen.core.models import SearchResult
+        from orbitr.core.models import SearchResult
 
         mock_result = SearchResult(
             papers=[], total_count=0, query="attention", sources=["arxiv"]
         )
         with (
             patch(
-                "lumen.commands.search.ArxivClient.search",
+                "orbitr.commands.search.ArxivClient.search",
                 new_callable=AsyncMock,
                 return_value=mock_result,
             ),
             patch(
-                "lumen.commands.search.SemanticScholarClient.search",
+                "orbitr.commands.search.SemanticScholarClient.search",
                 new_callable=AsyncMock,
                 return_value=mock_result,
             ),
         ):
             result = _invoke("query", "Vaswani 2017 attention", "--run")
-        # The generated lumen search command must appear in output
-        assert "lumen search" in result.output
+        # The generated orbitr search command must appear in output
+        assert "orbitr search" in result.output
         # Output must reference extracted terms
         assert "attention" in result.output or "Vaswani" in result.output
 
     def test_run_generated_command_contains_keywords(self):
         # Verify the generated command string (printed before --run executes)
         # contains the parsed keywords.  We abort early by patching search.
-        with patch("lumen.commands.search.search", MagicMock()):
+        with patch("orbitr.commands.search.search", MagicMock()):
             result = _invoke("query", "contrastive 2022", "--run")
         assert "contrastive" in result.output

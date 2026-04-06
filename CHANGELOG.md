@@ -15,7 +15,7 @@ Initial release.
 **Core pipeline**
 
 - Multi-source concurrent search across arXiv (Atom feed) and Semantic Scholar
-  (Graph API v1) via `lumen search`
+  (Graph API v1) via `orbitr search`
 - Intelligent deduplication: exact DOI match → exact arXiv ID match → fuzzy
   title similarity (rapidfuzz, 85% threshold) with author-overlap gating
 - Five ranking criteria: `relevance` (TF-IDF), `citations` (log-scaled),
@@ -25,20 +25,20 @@ Initial release.
 
 **Commands**
 
-- `lumen search` — keyword + `field:value` syntax, field flags (`--title`,
+- `orbitr search` — keyword + `field:value` syntax, field flags (`--title`,
   `--author`, `--venue`), year range (`--from`, `--to`), sort, format
-- `lumen paper` — fetch by arXiv ID, DOI, or Semantic Scholar ID; auto-detects
+- `orbitr paper` — fetch by arXiv ID, DOI, or Semantic Scholar ID; auto-detects
   ID type; accepts `arxiv:`, `abs/`, URL, and bare ID forms
-- `lumen cite` — citing papers via Semantic Scholar
-- `lumen author` — author search via Semantic Scholar two-step (search → papers)
-- `lumen recommend` — content/citation/hybrid recommendations via SS
-- `lumen export` — BibTeX, RIS, CSL-JSON; reads ndjson from stdin or `--query`
-- `lumen query` — heuristic NL-to-query translator with `--run` flag
-- `lumen zotero add/collections/new` — Zotero Web API integration via pyzotero
-- `lumen cache stats/clean/clear` — cache inspection and management
-- `lumen init` — interactive credential and defaults setup (writes `config.toml`
+- `orbitr cite` — citing papers via Semantic Scholar
+- `orbitr author` — author search via Semantic Scholar two-step (search → papers)
+- `orbitr recommend` — content/citation/hybrid recommendations via SS
+- `orbitr export` — BibTeX, RIS, CSL-JSON; reads ndjson from stdin or `--query`
+- `orbitr query` — heuristic NL-to-query translator with `--run` flag
+- `orbitr zotero add/collections/new` — Zotero Web API integration via pyzotero
+- `orbitr cache stats/clean/clear` — cache inspection and management
+- `orbitr init` — interactive credential and defaults setup (writes `config.toml`
   with mode `0600`)
-- `lumen doctor` — async connectivity checks for arXiv, SS, and Zotero
+- `orbitr doctor` — async connectivity checks for arXiv, SS, and Zotero
 
 **Display layer**
 
@@ -55,12 +55,12 @@ Initial release.
 - HTTP errors converted to clean `SourceError` in `BaseClient._get`; no raw
   httpx messages surface to users
 - 5xx errors retried up to 3× with exponential backoff; 403 directs to
-  `lumen init` for API key setup
+  `orbitr init` for API key setup
 - Dim suggestion lines on all error messages
 
 **Infrastructure**
 
-- Layered config: CLI flags > env vars > `~/.config/lumen/config.toml` > defaults
+- Layered config: CLI flags > env vars > `~/.config/orbitr/config.toml` > defaults
 - Nix flake dev environment (Python 3.12, uv, ruff, pyright)
 - `justfile` with test, lint, format, coverage, build, and install recipes
 - GitHub Actions CI: lint, typecheck, test (Python 3.10–3.12), coverage, build,
@@ -75,7 +75,7 @@ Initial release.
 ### Known limitations
 
 - Google Scholar support deferred to v1.1 (scraping fragility)
-- `lumen recommend --method` flag is accepted but all methods use the same
+- `orbitr recommend --method` flag is accepted but all methods use the same
   SS endpoint; method distinctions planned for v1.1
 - `display/detail.py` falls back to list view for multi-paper input in some
   edge cases
@@ -86,7 +86,7 @@ Initial release.
 
 ### Fixed
 
-- **`lumen init` — env-var credential protection** (`commands/init.py`, `config.py`):
+- **`orbitr init` — env-var credential protection** (`commands/init.py`, `config.py`):
   - Credentials supplied via `SEMANTIC_SCHOLAR_API_KEY`, `ZOTERO_USER_ID`, or
     `ZOTERO_API_KEY` environment variables are now detected at init time.
   - A clear dim note is shown for each active env var: *"Already set via
