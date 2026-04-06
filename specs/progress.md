@@ -1,16 +1,16 @@
 # Development Project Progress
 
 **Project:** lumen
-**Status:** Phase 4 complete — Phase 5 starting
+**Status:** v0.1.0 released
 **Last Updated:** 2026-04-06
 
 ## Current Status Overview
 
 ### Development Phase
 
-- **Current Phase:** Phase 5 — Testing and Documentation
-- **Phase Progress:** Phases 1–4 complete; Phase 5 starting
-- **Overall Project Progress:** ~75% complete
+- **Current Phase:** Released — v0.1.0
+- **Phase Progress:** All 6 phases complete
+- **Overall Project Progress:** 100% (v0.1.0)
 
 ### Recent Accomplishments
 

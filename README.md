@@ -1,6 +1,9 @@
 # lumen
 
-Academic literature search and reference management for the terminal. Search arXiv, Semantic Scholar, and Google Scholar; inspect papers and their citations; get recommendations; export bibliographies; and manage your Zotero library – all from the command line.
+Academic literature search and reference management for the terminal. Search
+arXiv and Semantic Scholar concurrently, inspect papers and their citations,
+get recommendations, export bibliographies, and manage your Zotero library —
+all without leaving the shell.
 
 ## Contents
 
@@ -22,7 +25,6 @@ Academic literature search and reference management for the terminal. Search arX
 - [Configuration](#configuration)
 - [Output formats](#output-formats)
 - [Piping and scripting](#piping-and-scripting)
-- [Error handling](#error-handling)
 - [Exit codes](#exit-codes)
 - [Shell completions](#shell-completions)
 - [Project layout](#project-layout)
@@ -38,119 +40,97 @@ Academic literature search and reference management for the terminal. Search arX
 git clone <repo-url> lumen
 cd lumen
 uv tool install .
-```
-
-Verify the install:
-
-```bash
 lumen --version
 ```
 
 ### Development setup
 
-`lumen` uses a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html) to pin the development environment (Python 3.12, uv, ruff, pyright) and [`just`](https://just.systems) as a task runner.
+`lumen` uses a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html)
+to pin the development environment (Python 3.12, uv, ruff, pyright) and
+[`just`](https://just.systems) as a task runner.
 
 **Prerequisites:** Nix with flakes enabled, direnv, just.
 
 ```bash
 git clone <repo-url> lumen
-cd lumen                  # direnv activates the flake shell automatically
-just setup                # uv sync inside the pinned environment
-just run -- --help        # verify
+cd lumen          # direnv activates the flake shell automatically
+just setup        # uv sync inside the pinned environment
+just run -- --help
 ```
 
-If direnv is not installed, enter the shell manually:
-
-```bash
-nix develop
-just setup
-```
+Without direnv: `nix develop && just setup`.
 
 **Common tasks:**
 
 ```bash
-just test        # run the full test suite
-just cov         # test with coverage report
-just check       # lint + format check (CI-safe, no writes)
+just test        # full test suite
+just cov         # tests with coverage report
+just check       # lint + format check (no writes)
 just qa          # check + type check
 just fmt         # auto-format source files
-just doctor      # verify credentials and API connectivity
-just run -- search "transformers"  # run lumen directly
 ```
-
-Run `just` with no arguments to list all available recipes.
 
 ### API credentials
 
-`lumen` works out of the box with no credentials. Providing them unlocks higher rate limits and Zotero integration.
+`lumen` works without credentials; providing them increases rate limits and
+enables Zotero integration.
 
-| Variable | Purpose |
+| Credential | Purpose |
 |---|---|
-| `SEMANTIC_SCHOLAR_API_KEY` | Increased rate limits on Semantic Scholar |
-| `ZOTERO_USER_ID` | Zotero library access |
-| `ZOTERO_API_KEY` | Zotero library access (read/write) |
-
-Run the guided setup to store credentials:
+| Semantic Scholar API key | Higher rate limits (get one at semanticscholar.org/product/api) |
+| Zotero User ID + API key | `lumen zotero` commands |
 
 ```bash
-lumen init
+lumen init      # guided interactive setup
 ```
 
-Or set them manually in `~/.config/lumen/config.toml` (see [Configuration](#configuration)).
+Or set environment variables directly — see [Configuration](#configuration).
 
 ---
 
 ## Quick start
 
 ```bash
-# Search for papers
+# Search across arXiv and Semantic Scholar
 lumen search "retrieval augmented generation"
 
-# Narrow by field and date
-lumen search --title "scaling laws" --year-from 2022
+# Field filters and date range
+lumen search "scaling laws" --from 2022 --sort citations
 
-# Get full details on a paper
-lumen paper 2005.14165 --source arxiv
+# Full metadata for a specific paper (arXiv ID, DOI, or SS ID accepted)
+lumen paper 2005.14165
 
-# See what cites it
-lumen cite 2005.14165 --source arxiv
+# Papers citing the Transformer paper
+lumen cite 1706.03762 --limit 20
 
-# Find papers by an author
+# Papers by an author
 lumen author "Percy Liang"
 
-# Get recommendations from a seed paper
-lumen recommend "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"
+# Recommendations from a seed paper
+lumen recommend 1706.03762
 
-# Export results as BibTeX
-lumen search "in-context learning" --format json | lumen export --format bibtex --output refs.bib
+# Export search results as BibTeX
+lumen search "in-context learning" --format json \
+  | lumen export --format bibtex --output refs.bib
 
-# Add papers to Zotero
-lumen zotero add "sparse mixture of experts" --collection "Reading/MoE"
+# Add a paper to Zotero
+lumen zotero add 2503.19260 --collection "Reading List" --tags "llm,linguistics"
 ```
 
 ---
 
 ## Global flags
 
-These flags apply to every command.
+These flags work with every command.
 
 | Flag | Short | Description |
 |---|---|---|
-| `--help` | `-h` | Show help for any command |
+| `--help` | | Show help for any command |
 | `--version` | `-V` | Print version and exit |
 | `--verbose` | `-v` | Show debug output and request details |
-| `--quiet` | `-q` | Suppress all output except results and errors |
-| `--no-color` | | Disable colored output (also respected via `NO_COLOR` env var) |
+| `--quiet` | `-q` | Suppress informational output; only results and errors |
+| `--no-color` | | Disable ANSI color (also: `NO_COLOR` env var) |
 | `--config <path>` | | Use an alternate config file |
-
-```bash
-lumen --help
-lumen search --help
-lumen --version
-lumen --no-color search "neural ODEs"
-```
-
-Every subcommand also accepts `--help` and prints a compact usage summary, option descriptions, and a short example.
 
 ---
 
@@ -158,297 +138,264 @@ Every subcommand also accepts `--help` and prints a compact usage summary, optio
 
 ### `lumen search`
 
-Search for papers across one or more sources. Supports both general keyword queries and field-specific filters; mix them freely.
+Search for papers across arXiv and Semantic Scholar concurrently. Results are
+deduplicated by DOI, arXiv ID, and title similarity, then ranked by the chosen
+criterion.
 
 ```
-lumen search [query] [options]
+lumen search QUERY [OPTIONS]
 ```
 
-When `query` is omitted, at least one field flag (`--title`, `--author`, etc.) is required.
+Field filters can be given as CLI flags or embedded directly in the query
+string using `field:value` syntax (e.g. `"title:attention author:Vaswani"`).
 
 **Options:**
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--title <text>` | `-t` | | Match within paper titles |
-| `--author <name>` | `-a` | | Match by author name |
-| `--abstract <text>` | | | Match within abstracts |
-| `--venue <name>` | | | Filter by journal or conference |
-| `--year-from <year>` | | | Earliest publication year |
-| `--year-to <year>` | | | Latest publication year |
-| `--sources <list>` | `-s` | `arxiv,semantic_scholar` | Comma-separated sources: `arxiv`, `semantic_scholar`, `google_scholar` |
-| `--max <n>` | `-n` | `10` | Maximum results to return |
-| `--sort <by>` | | `relevance` | Sort order: `relevance`, `date`, `citations`, `impact` |
-| `--format <fmt>` | `-f` | `table` | Output format: `table`, `list`, `json` |
+| `--sources` | `-s` | `arxiv,semantic_scholar` | Comma-separated sources |
+| `--limit` | `-n` | `10` | Max results (1–200) |
+| `--title` | `-T` | | Filter by title keywords |
+| `--author` | `-a` | | Filter by author name |
+| `--venue` | `-j` | | Filter by journal or conference |
+| `--from` | | | Earliest publication year |
+| `--to` | | | Latest publication year |
+| `--sort` | | `relevance` | `relevance`, `citations`, `date`, `impact`, `combined` |
+| `--format` | `-f` | `table` | `table`, `list`, `detail`, `json` |
+| `--no-cache` | | | Bypass the local result cache |
 
 ```bash
-# General keyword search
+# Keyword search
 lumen search "diffusion models image generation"
 
-# Field-specific filters
-lumen search --author "Andrej Karpathy" --year-from 2021
+# Field-filter flags
+lumen search "RLHF" --author "Ouyang" --from 2022 --to 2023
 
-# Combine keyword and filters
-lumen search "RLHF" --venue "NeurIPS" --year-from 2022 --year-to 2023
+# Inline field syntax
+lumen search "title:contrastive learning author:Chen"
 
-# Widen sources and sort by citations
-lumen search "vision transformer" \
-  --sources arxiv,semantic_scholar,google_scholar \
-  --sort citations --max 25
+# Single source, sorted by citations
+lumen search "vision transformer" --sources semantic_scholar \
+  --limit 25 --sort citations
 
 # Machine-readable output
 lumen search "federated learning" --format json
 ```
 
-**Deduplication and ranking:** results from multiple sources are automatically deduplicated (by DOI, arXiv ID, and title similarity) and ranked before display.
-
 ---
 
 ### `lumen paper`
 
-Retrieve full metadata for a specific paper by its ID.
+Fetch full metadata for a single paper. Accepts arXiv IDs, DOIs, and
+Semantic Scholar paper IDs — the source is detected automatically.
 
 ```
-lumen paper <id> --source <source> [options]
+lumen paper PAPER_ID [OPTIONS]
 ```
-
-**Arguments:**
-
-| Argument | Description |
-|---|---|
-| `<id>` | arXiv ID (e.g. `2310.06825`) or Semantic Scholar paper ID |
 
 **Options:**
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--source <src>` | `-s` | required | `arxiv` or `semantic_scholar` |
-| `--format <fmt>` | `-f` | `detail` | `detail` or `json` |
+| `--format` | `-f` | `table` | `table`, `list`, `detail`, `json` |
+| `--no-cache` | | | Bypass the local paper cache |
 
 ```bash
-lumen paper 2310.06825 --source arxiv
-
-lumen paper 204e3073870fae3d05bcbc2f6a8e263d9b72e776 --source semantic_scholar
-
-lumen paper 2310.06825 --source arxiv --format json
+lumen paper 1706.03762                          # arXiv ID
+lumen paper arxiv:2503.19260                    # arXiv ID with prefix
+lumen paper 10.18653/v1/2020.acl-main.196       # DOI
+lumen paper 1706.03762 --format detail          # full single-paper view
+lumen paper 1706.03762 --format json            # machine-readable
 ```
 
 ---
 
 ### `lumen cite`
 
-List papers that cite a given paper.
+List papers that cite a given paper via Semantic Scholar. Accepts arXiv IDs,
+DOIs, and Semantic Scholar paper IDs.
 
 ```
-lumen cite <id> [options]
+lumen cite PAPER_ID [OPTIONS]
 ```
 
 **Options:**
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--source <src>` | `-s` | `semantic_scholar` | Source for citation data |
-| `--max <n>` | `-n` | `10` | Maximum citations to return |
-| `--sort <by>` | | `date` | Sort order: `date`, `citations`, `relevance` |
-| `--format <fmt>` | `-f` | `list` | `list` or `json` |
+| `--limit` | `-n` | `10` | Max citing papers (1–200) |
+| `--format` | `-f` | `table` | `table`, `list`, `detail`, `json` |
+| `--no-cache` | | | Bypass the local citation cache |
 
 ```bash
-lumen cite 204e3073870fae3d05bcbc2f6a8e263d9b72e776
-
-lumen cite 2005.14165 --source arxiv --max 50 --sort citations
+lumen cite 1706.03762
+lumen cite 1706.03762 --limit 50 --format list
+lumen cite 10.18653/v1/2020.acl-main.196 --format json
 ```
 
 ---
 
 ### `lumen author`
 
-Find papers by a specific author.
+Search for an author by name and list their papers via Semantic Scholar.
+Returns publications from the best-matching author result.
 
 ```
-lumen author <name> [options]
+lumen author NAME [OPTIONS]
 ```
 
 **Options:**
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--sources <list>` | `-s` | `arxiv,semantic_scholar` | Sources to query |
-| `--max <n>` | `-n` | `10` | Maximum results |
-| `--sort <by>` | | `date` | Sort order: `date`, `citations`, `relevance` |
-| `--format <fmt>` | `-f` | `table` | `table`, `list`, or `json` |
+| `--limit` | `-n` | `10` | Max papers to list (1–200) |
+| `--format` | `-f` | `table` | `table`, `list`, `detail`, `json` |
+| `--no-cache` | | | Bypass the local cache |
 
 ```bash
 lumen author "Emily M. Bender"
-
-lumen author "Geoffrey Hinton" --max 50 --sort citations
-
-lumen author "Percy Liang" --sources semantic_scholar --format json
+lumen author "LeCun" --limit 20 --format list
+lumen author "Percy Liang" --format json | jq '.[].title'
 ```
-
-Names are matched flexibly; partial last names and initials are supported.
 
 ---
 
 ### `lumen recommend`
 
-Get paper recommendations based on one or more seed titles.
+Get papers similar to a seed paper via Semantic Scholar's recommendation API.
+The seed is any paper ID — arXiv ID, DOI, or Semantic Scholar ID.
 
 ```
-lumen recommend <title> [<title> ...] [options]
+lumen recommend SEED [OPTIONS]
 ```
 
 **Options:**
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--method <m>` | `-m` | `hybrid` | Recommendation method: `content`, `citations`, `hybrid` |
-| `--max <n>` | `-n` | `10` | Number of recommendations |
-| `--sources <list>` | `-s` | `arxiv,semantic_scholar` | Candidate pool sources |
-| `--format <fmt>` | `-f` | `list` | `list` or `json` |
-
-**Methods:**
-
-- `content` – similarity by title, abstract, and subject categories
-- `citations` – co-citation patterns and citation velocity
-- `hybrid` – weighted combination of content, citations, recency, and venue
+| `--method` | `-m` | `hybrid` | `content`, `citation`, or `hybrid` |
+| `--limit` | `-n` | `10` | Number of recommendations (1–50) |
+| `--format` | `-f` | `table` | `table`, `list`, `detail`, `json` |
+| `--no-cache` | | | Bypass the local cache |
 
 ```bash
-lumen recommend "Attention Is All You Need"
-
-lumen recommend "BERT" "RoBERTa" --method citations --max 20
-
-lumen recommend "constitutional AI" --method hybrid --format json
+lumen recommend 1706.03762
+lumen recommend 1706.03762 --method citation --limit 20
+lumen recommend 10.18653/v1/2020.acl-main.196 --format json
 ```
 
 ---
 
 ### `lumen export`
 
-Export one or more papers to a bibliography format. Accepts explicit paper IDs or reads from piped `lumen search --format json` output.
+Export papers to a bibliography format. Reads paper JSON piped from another
+`lumen` command, or runs a fresh search with `--query`.
 
 ```
-lumen export [<id>] [options]
+lumen export [OPTIONS]
 ```
 
 **Options:**
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--source <src>` | `-s` | required (unless piped) | Source for each ID; repeat for multiple |
-| `--format <fmt>` | `-f` | `bibtex` | `bibtex`, `ris`, or `csl-json` |
-| `--output <path>` | `-o` | stdout | File path to write output |
-| `--append` | | false | Append to output file instead of overwriting |
+| `--format` | `-f` | `bibtex` | `bibtex`, `ris`, `csl-json` |
+| `--output` | `-o` | stdout | Output file path |
+| `--query` | `-q` | | Run a fresh search and export results |
 
 ```bash
-# Single paper to stdout
-lumen export 2310.06825 --source arxiv
+# Pipe from search
+lumen search "sparse attention" --limit 10 --format json \
+  | lumen export --format bibtex --output sparse.bib
 
-# Multiple papers to file
-lumen export 2310.06825 --source arxiv \
-             2005.14165 --source arxiv \
-  --format bibtex --output refs.bib
+# Single paper via pipe
+lumen paper 1706.03762 --format json \
+  | lumen export --format csl-json
 
-# Pipe from search results
-lumen search "sparse attention" --sort citations --max 5 --format json \
-  | lumen export --format bibtex --output sparse_attention.bib
+# Direct query (no pipe needed)
+lumen export --query "BERT language model" --format ris --output bert.ris
 
-# Append to an existing file
-lumen export 2310.06825 --source arxiv --format bibtex --output refs.bib --append
+# RIS to stdout for inspection
+lumen search "contrastive learning" --format json | lumen export --format ris
 ```
 
 ---
 
 ### `lumen query`
 
-Translate a plain-language description into an optimized search query for a specific source. Useful for understanding advanced query syntax before running a search.
+Translate a plain-language description into a `lumen search` command.
+Extracts year, author, and keywords heuristically.
 
 ```
-lumen query <description> [options]
-```
-
-**Options:**
-
-| Flag | Short | Default | Description |
-|---|---|---|---|
-| `--target <src>` | `-t` | `arxiv` | Target source: `arxiv`, `semantic_scholar`, `google_scholar` |
-
-```bash
-lumen query "recent interpretability work on large language models"
-
-lumen query "transformer models for protein folding since 2021" --target semantic_scholar
-```
-
-Output includes the suggested query string, a breakdown of how it was constructed, and alternative phrasings.
-
----
-
-### `lumen zotero`
-
-Manage your Zotero library. Requires `ZOTERO_USER_ID` and `ZOTERO_API_KEY` (set via `lumen init` or config file).
-
-Run `lumen doctor` to verify your Zotero credentials before using these commands.
-
----
-
-#### `lumen zotero add`
-
-Add papers to your Zotero library by search query or explicit paper IDs.
-
-```
-lumen zotero add <query-or-id> [options]
-```
-
-**Options:**
-
-| Flag | Short | Default | Description |
-|---|---|---|---|
-| `--source <src>` | `-s` | auto-detect | Source when adding by ID |
-| `--collection <path>` | `-c` | none | Target collection; supports nested paths (`Research/NLP`) |
-| `--tags <list>` | `-t` | none | Comma-separated tags to apply |
-| `--no-create` | | false | Fail if the target collection does not exist |
-| `--no-auto-tag` | | false | Skip automatic source and category tagging |
-| `--dry-run` | | false | Show what would be added without making changes |
-
-Every paper added by `lumen` is automatically tagged `lumen` for tracking. Additional automatic tags include source (`source-arxiv`, `source-semantic_scholar`) and subject categories where available.
-
-```bash
-# Add by keyword query
-lumen zotero add "mixture of experts" --collection "Reading/MoE" --tags "survey"
-
-# Add a specific paper by arXiv ID
-lumen zotero add 2310.06825 --source arxiv --collection "Reading List"
-
-# Preview before committing
-lumen zotero add "RLHF alignment" --collection "PhD/Ch2" --dry-run
-```
-
----
-
-#### `lumen zotero collections`
-
-List collections in your Zotero library.
-
-```
-lumen zotero collections [options]
+lumen query NATURAL [OPTIONS]
 ```
 
 **Options:**
 
 | Flag | Short | Description |
 |---|---|---|
-| `--filter <text>` | `-f` | Filter collection names by substring |
-| `--lumen-only` | | Show only collections containing lumen-added papers |
-| `--no-counts` | | Hide item counts |
+| `--run` | `-r` | Execute the generated command immediately |
+
+```bash
+# Show the generated command
+lumen query "recent papers on contrastive learning in NLP"
+
+# Show and run immediately
+lumen query "Vaswani attention transformer 2017" --run
+```
+
+---
+
+### `lumen zotero`
+
+Manage your Zotero library. Requires `zotero_user_id` and `zotero_api_key` —
+run `lumen init` to configure them, then `lumen doctor` to verify.
+
+---
+
+#### `lumen zotero add`
+
+Add a paper to your Zotero library by ID. Fetches full metadata from arXiv or
+Semantic Scholar and creates a `journalArticle` item.
+
+```
+lumen zotero add PAPER_ID [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Short | Description |
+|---|---|---|
+| `--collection` | `-c` | Target collection name or key |
+| `--tags` | `-t` | Comma-separated tags |
+| `--no-cache` | | Bypass the local paper cache |
+
+```bash
+lumen zotero add 1706.03762
+lumen zotero add arxiv:2503.19260 --collection "Reading List" --tags "llm,linguistics"
+lumen zotero add 10.18653/v1/2020.acl-main.196 --collection "NLP Papers"
+```
+
+---
+
+#### `lumen zotero collections`
+
+List all collections in your Zotero library.
+
+```
+lumen zotero collections [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--format` | `-f` | `table` | `table` or `json` |
 
 ```bash
 lumen zotero collections
-
-lumen zotero collections --filter "dissertation"
-
-lumen zotero collections --lumen-only
+lumen zotero collections --format json | jq '.[].name'
 ```
-
-Output is displayed as an indented hierarchy reflecting the collection tree in your library.
 
 ---
 
@@ -457,126 +404,76 @@ Output is displayed as an indented hierarchy reflecting the collection tree in y
 Create a new collection in your Zotero library.
 
 ```
-lumen zotero new <name> [options]
+lumen zotero new NAME [OPTIONS]
 ```
-
-Nested collections can be created in one step using `/` as a separator.
 
 **Options:**
 
 | Flag | Short | Description |
 |---|---|---|
-| `--parent <name>` | `-p` | Parent collection (alternative to `/` separator) |
-| `--description <text>` | `-d` | Optional description |
+| `--parent` | `-p` | Parent collection name or key |
 
 ```bash
-lumen zotero new "PhD Research/Chapter 3/Methods"
-
-lumen zotero new "Side Projects" --description "Exploratory reading, low priority"
+lumen zotero new "PhD Research"
+lumen zotero new "Chapter 3" --parent "PhD Research"
 ```
 
 ---
 
 ### `lumen cache`
 
-Manage the local result cache. Caching reduces redundant API calls and speeds up repeated queries. Three cache tiers are maintained independently: search results, individual papers, and citation lists.
+Manage the local SQLite result cache. Three tiers are maintained independently:
+`search` (1 h TTL), `paper` (24 h), `citations` (6 h).
 
 ```
-lumen cache <subcommand>
+lumen cache COMMAND
 ```
 
 | Subcommand | Description |
 |---|---|
-| `stats` | Show entry counts, hit/miss rates, and disk usage per tier |
-| `clean` | Remove expired entries while keeping valid ones |
-| `clear` | Wipe all cached data |
+| `stats` | Entry counts per tier, disk usage, and cache path |
+| `clean [--tier T]` | Remove expired entries; optional tier filter |
+| `clear [--tier T] [--yes]` | Delete all entries; prompts unless `--yes` |
 
 ```bash
 lumen cache stats
 lumen cache clean
-lumen cache clear
+lumen cache clean --tier search
+lumen cache clear --yes
+lumen cache clear --tier paper --yes
 ```
 
 ---
 
 ### `lumen init`
 
-Interactive first-time setup. Guides you through storing API credentials and setting default preferences.
-
-```
-lumen init [options]
-```
-
-**Options:**
-
-| Flag | Description |
-|---|---|
-| `--zotero` | Configure only Zotero credentials |
-| `--apis` | Configure only academic API keys |
-| `--defaults` | Set only default search preferences |
-| `--reset` | Overwrite any existing configuration |
+Interactive first-time setup. Writes `~/.config/lumen/config.toml` with mode
+`0600`. Run once after installing, or again to rotate credentials.
 
 ```bash
-# Full guided setup
 lumen init
-
-# Re-configure Zotero only
-lumen init --zotero
 ```
 
-Credentials are written to `~/.config/lumen/config.toml`. Sensitive keys are stored under a `[credentials]` section and the file is created with `0600` permissions.
+Prompts for Semantic Scholar API key, Zotero credentials, and default
+preferences. All values are optional and can be skipped.
 
 ---
 
 ### `lumen doctor`
 
-Check that `lumen` is correctly configured and all upstream services are reachable. Useful after initial setup or when troubleshooting errors.
-
-```
-lumen doctor [options]
-```
-
-**Options:**
-
-| Flag | Description |
-|---|---|
-| `--fix` | Attempt to resolve detected issues automatically |
+Check configuration and connectivity to arXiv and Semantic Scholar (and Zotero
+if credentials are configured). Exits `0` if all checks pass, `1` if any
+connectivity check fails.
 
 ```bash
 lumen doctor
-```
-
-**Checks performed:**
-
-- Config file presence and validity
-- arXiv API reachability and response time
-- Semantic Scholar API reachability; key validity if configured
-- Google Scholar reachability
-- Zotero credentials validity and write permissions (if configured)
-- Cache directory permissions and disk space
-- `lumen` version vs. latest release
-
-Example output:
-
-```
-lumen doctor
-
-✓  Config         ~/.config/lumen/config.toml
-✓  arXiv          reachable (143 ms)
-✓  Semantic Scholar  reachable, API key valid (87 ms)
-⚠  Google Scholar  reachable but rate-limited – consider reducing request frequency
-✓  Zotero         credentials valid, read/write access confirmed
-✓  Cache          ~/.cache/lumen (34 MB, 1 247 entries)
-✓  Version        0.1.0 (up to date)
-
-1 warning. Run `lumen doctor --fix` to apply suggestions.
 ```
 
 ---
 
 ## Configuration
 
-`lumen` resolves settings in this order, with earlier sources taking precedence:
+Settings are resolved in this order (earlier sources win):
 
 ```
 CLI flags  >  environment variables  >  config file  >  built-in defaults
@@ -584,25 +481,15 @@ CLI flags  >  environment variables  >  config file  >  built-in defaults
 
 ### Config file
 
-Location: `~/.config/lumen/config.toml` (XDG Base Directory compliant; override with `LUMEN_CONFIG` or `--config`).
+Location: `~/.config/lumen/config.toml` (XDG; override with `--config`).
 
 ```toml
 [defaults]
-sources     = "arxiv,semantic_scholar"
+sources     = ["arxiv", "semantic_scholar"]
 max_results = 10
-sort_by     = "relevance"
 format      = "table"
-
-[cache]
-enabled       = true
-dir           = "~/.cache/lumen"
-ttl_search    = 3600     # 1 hour
-ttl_paper     = 86400    # 24 hours
-ttl_citations = 21600    # 6 hours
-
-[zotero]
-auto_tag           = true
-default_collection = ""
+no_cache    = false
+no_pager    = false
 
 [credentials]
 semantic_scholar_api_key = ""
@@ -612,112 +499,65 @@ zotero_api_key           = ""
 
 ### Environment variables
 
-All settings have a `LUMEN_` equivalent that overrides the config file.
-
-| Variable | Equivalent config key |
+| Variable | Description |
 |---|---|
-| `LUMEN_SOURCES` | `defaults.sources` |
-| `LUMEN_MAX_RESULTS` | `defaults.max_results` |
-| `LUMEN_FORMAT` | `defaults.format` |
-| `LUMEN_CACHE_DIR` | `cache.dir` |
-| `LUMEN_NO_CACHE` | disables caching entirely |
-| `SEMANTIC_SCHOLAR_API_KEY` | `credentials.semantic_scholar_api_key` |
-| `ZOTERO_USER_ID` | `credentials.zotero_user_id` |
-| `ZOTERO_API_KEY` | `credentials.zotero_api_key` |
-| `NO_COLOR` | disables all ANSI color output |
-| `LUMEN_CONFIG` | path to alternate config file |
+| `LUMEN_SOURCES` | Default sources (comma-separated) |
+| `LUMEN_MAX_RESULTS` | Default result limit |
+| `LUMEN_FORMAT` | Default output format |
+| `LUMEN_CACHE_DIR` | Override cache directory |
+| `LUMEN_NO_CACHE` | Disable caching (`1` = true) |
+| `LUMEN_NO_PAGER` | Disable pager (`1` = true) |
+| `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar API key |
+| `ZOTERO_USER_ID` | Zotero user ID |
+| `ZOTERO_API_KEY` | Zotero API key |
+| `NO_COLOR` | Disable all ANSI color output |
+
+A template is provided in `.env.example`.
 
 ---
 
 ## Output formats
 
-All commands that return paper data support `--format` / `-f`:
+All paper-returning commands support `--format` / `-f`:
 
 | Format | Description | Best for |
 |---|---|---|
-| `table` | Compact multi-column table with truncated fields | Interactive browsing |
-| `list` | One paper per block, all fields labeled | Reading in the terminal |
+| `table` | Compact multi-column table (truncated fields) | Interactive browsing |
+| `list` | One labeled block per paper, abstract snippet | Skimming results |
 | `detail` | Full single-paper view with wrapped abstract | `lumen paper` |
-| `json` | Array of paper objects, newline-delimited | Scripting, piping, `jq` |
+| `json` | Newline-delimited JSON objects | Piping, `jq`, scripting |
 
-When stdout is not a TTY (i.e. output is piped or redirected), `lumen` defaults to `json` automatically unless `--format` is specified explicitly.
+**Auto-detection:** when stdout is not a TTY (pipe or redirect), `--format`
+defaults to `json` automatically unless set explicitly.
 
-**Color and paging:**
-
-- Color output is disabled when `NO_COLOR` is set or `--no-color` is passed.
-- Long output is paged through `$PAGER` (defaulting to `less -R`) when stdout is a TTY. Disable with `LUMEN_NO_PAGER=1`.
+**Pager:** long output is paged through `$PAGER` (default: `less -R`) when
+stdout is a TTY. Disable with `LUMEN_NO_PAGER=1` or `--no-color`.
 
 ---
 
 ## Piping and scripting
 
-`lumen` follows Unix conventions to compose well with other tools.
-
-- Results go to **stdout**; progress messages, warnings, and errors go to **stderr**.
-- `--format json` always produces valid JSON regardless of TTY state.
-- `lumen export` reads piped JSON from `lumen search` or `lumen author`.
-- Use `--quiet` / `-q` to suppress progress output in scripts.
+- Results → **stdout**; warnings and errors → **stderr**.
+- `--format json` always produces newline-delimited JSON regardless of TTY.
+- `lumen export` reads piped JSON from any `lumen` command.
+- Use `-q` / `--quiet` to suppress progress output in scripts.
 
 ```bash
-# Collect top-cited papers on a topic and export to BibTeX
-lumen search "retrieval augmented generation" \
-  --sort citations --max 10 --format json \
-  | lumen export --format bibtex --output rag.bib
+# Search → BibTeX file
+lumen search "in-context learning" --sort citations --limit 10 --format json \
+  | lumen export --format bibtex --output icl.bib
 
-# Extract URLs with jq
-lumen search "model merging" --format json \
-  | jq -r '.[].url'
+# Extract titles with jq
+lumen search "model merging" --format json | jq -r '.[].title'
 
-# Build a reading list CSV
+# Author publication list as CSV
 lumen author "Danqi Chen" --format json \
-  | jq -r '.[] | [.title, .published_date, .citation_count] | @csv' \
+  | jq -r '.[] | [.title, (.published_date // ""), (.citation_count // 0)] | @csv' \
   > danqi_chen.csv
 
-# Pipe into an external script
-lumen search "continual learning" --format json | python triage.py
+# Pipe into a custom script
+lumen search "continual learning" --limit 20 --format json | python triage.py
 ```
-
----
-
-## Error handling
-
-`lumen` writes errors to **stderr** and exits with a non-zero code. Error messages identify what failed, why, and what to do next.
-
-**Examples:**
-
-```
-Error: Zotero credentials are not configured.
-
-Set ZOTERO_USER_ID and ZOTERO_API_KEY, then re-run:
-  lumen init --zotero
-
-For help: lumen zotero --help
-```
-
-```
-Error: arXiv returned no results for paper ID "9999.99999".
-
-Check that the ID is correct:
-  https://arxiv.org/abs/9999.99999
-
-To search instead: lumen search "your query"
-```
-
-```
-Error: Rate limit reached for Semantic Scholar (429).
-
-lumen will retry automatically with backoff. To search only arXiv in the meantime:
-  lumen search "your query" --sources arxiv
-```
-
-```
-Error: --source is required when exporting by paper ID.
-
-Usage: lumen export <id> --source <arxiv|semantic_scholar>
-For help: lumen export --help
-```
-
-**Automatic retry:** transient network errors and rate-limit responses (429, 503) are retried with exponential backoff before surfacing as errors. Source failures are isolated – if one source fails, results from the remaining sources are still returned.
 
 ---
 
@@ -726,31 +566,48 @@ For help: lumen export --help
 | Code | Meaning |
 |---|---|
 | `0` | Success |
-| `1` | General error (network failure, API error, unexpected exception) |
-| `2` | Usage error (missing argument, invalid option, bad combination) |
-| `3` | Configuration error (missing credentials, invalid config file) |
+| `1` | Source error (network failure, API error) |
+| `2` | Usage error (bad argument, invalid flag value) |
+| `3` | Config error (missing credentials) |
 | `4` | No results found |
 
 ---
 
 ## Shell completions
 
-Generate and install completion scripts for your shell:
+`lumen` supports tab-completion for Zsh, Bash, and Fish via Click's completion
+system. The simplest method is the built-in flag (works when run directly from
+an interactive shell):
 
 ```bash
-# Zsh
-lumen --completion zsh > ~/.zfunc/_lumen
-# add to ~/.zshrc: fpath=(~/.zfunc $fpath); autoload -Uz compinit && compinit
-
-# Bash
-lumen --completion bash > ~/.bash_completion.d/lumen
-# add to ~/.bashrc: source ~/.bash_completion.d/lumen
-
-# Fish
-lumen --completion fish > ~/.config/fish/completions/lumen.fish
+lumen --install-completion   # detects your shell and installs automatically
 ```
 
-Completions cover subcommands, flags, and dynamic values where feasible (e.g. Zotero collection names for `--collection`).
+If auto-detection fails, generate the script manually with the `_LUMEN_COMPLETE`
+environment variable:
+
+**Zsh:**
+
+```bash
+_LUMEN_COMPLETE=source_zsh lumen > ~/.zfunc/_lumen
+# Add to ~/.zshrc (if not already present):
+#   fpath=(~/.zfunc $fpath)
+#   autoload -Uz compinit && compinit
+```
+
+**Bash:**
+
+```bash
+_LUMEN_COMPLETE=source_bash lumen > ~/.bash_completion.d/lumen
+# Add to ~/.bashrc:
+#   source ~/.bash_completion.d/lumen
+```
+
+**Fish:**
+
+```bash
+_LUMEN_COMPLETE=source_fish lumen > ~/.config/fish/completions/lumen.fish
+```
 
 ---
 
@@ -759,45 +616,67 @@ Completions cover subcommands, flags, and dynamic values where feasible (e.g. Zo
 ```
 lumen/
 ├── pyproject.toml
-├── README.md
+├── flake.nix
 ├── .env.example
+├── README.md
 ├── src/
 │   └── lumen/
 │       ├── __init__.py
-│       ├── cli.py              # Entry point and command tree (Typer)
-│       ├── config.py           # Config file, env var, and defaults resolution
+│       ├── cli.py              # Typer app root; global flags; command registration
+│       ├── config.py           # Layered config: flags > env vars > file > defaults
+│       ├── _async.py           # asyncio.run() helper
+│       ├── exceptions.py       # LumenError hierarchy with exit codes
 │       ├── commands/
-│       │   ├── search.py       # search, author
-│       │   ├── paper.py        # paper, cite
-│       │   ├── recommend.py    # recommend, query
-│       │   ├── export.py       # export
-│       │   ├── zotero.py       # zotero add / collections / new
-│       │   ├── cache.py        # cache stats / clean / clear
-│       │   ├── init.py         # init
-│       │   └── doctor.py       # doctor
+│       │   ├── search.py       # lumen search
+│       │   ├── paper.py        # lumen paper, lumen cite
+│       │   ├── author.py       # lumen author
+│       │   ├── recommend.py    # lumen recommend
+│       │   ├── export.py       # lumen export
+│       │   ├── query.py        # lumen query
+│       │   ├── zotero.py       # lumen zotero add / collections / new
+│       │   ├── cache.py        # lumen cache stats / clean / clear
+│       │   ├── init.py         # lumen init
+│       │   └── doctor.py       # lumen doctor
 │       ├── clients/
-│       │   ├── arxiv.py
-│       │   ├── semantic_scholar.py
-│       │   └── google_scholar.py
+│       │   ├── base.py         # Retry, backoff, circuit-break; HTTPError → SourceError
+│       │   ├── arxiv.py        # arXiv Atom feed client
+│       │   └── semantic_scholar.py  # Semantic Scholar Graph API client
 │       ├── core/
-│       │   ├── models.py       # Paper, Author, SearchResult
-│       │   ├── deduplication.py
-│       │   ├── ranking.py
-│       │   ├── cache.py
-│       │   └── export.py
+│       │   ├── models.py       # Paper, Author, SearchResult (Pydantic v2)
+│       │   ├── deduplication.py # DOI / arXiv ID / fuzzy-title dedup
+│       │   ├── ranking.py      # relevance, citations, date, impact, combined
+│       │   ├── cache.py        # SQLite TTL cache (3 tiers)
+│       │   ├── export.py       # BibTeX, RIS, CSL-JSON formatters
+│       │   └── query.py        # field:value parsing; per-source query builders
 │       ├── zotero/
-│       │   └── client.py
+│       │   └── client.py       # pyzotero wrapper
 │       └── display/
-│           ├── table.py
-│           ├── list.py
-│           ├── detail.py
-│           └── json.py
+│           ├── __init__.py     # render() dispatcher; effective_format(); pager
+│           ├── table.py        # Rich Table renderer
+│           ├── list.py         # Rich Panel renderer
+│           ├── detail.py       # Full single-paper Rich layout
+│           └── json_fmt.py     # Newline-delimited JSON serialiser
 └── tests/
     ├── conftest.py
+    ├── fixtures/               # Recorded API responses for offline testing
+    ├── test_models.py
+    ├── test_arxiv.py
+    ├── test_semantic_scholar.py
+    ├── test_deduplication.py
+    ├── test_ranking.py
+    ├── test_cache.py
     ├── test_search.py
+    ├── test_cache_cmd.py
+    ├── test_paper.py
+    ├── test_recommend.py
+    ├── test_author.py
     ├── test_export.py
+    ├── test_init.py
+    ├── test_doctor.py
+    ├── test_query.py
     ├── test_zotero.py
-    └── test_cache.py
+    ├── test_display_phase4.py
+    └── test_base_client.py
 ```
 
 ---
@@ -807,11 +686,11 @@ lumen/
 | Package | Purpose |
 |---|---|
 | [`typer`](https://typer.tiangolo.com) | CLI framework; command tree, flags, completions |
-| [`rich`](https://rich.readthedocs.io) | Terminal output: tables, panels, progress bars, color |
-| [`httpx`](https://www.python-httpx.org) | Async HTTP client for API calls |
+| [`rich`](https://rich.readthedocs.io) | Tables, panels, color, pager integration |
+| [`httpx`](https://www.python-httpx.org) | Async HTTP client |
 | [`pydantic`](https://docs.pydantic.dev) | Data models and validation |
-| [`pyzotero`](https://pyzotero.readthedocs.io) | Zotero Web API client |
 | [`feedparser`](https://feedparser.readthedocs.io) | arXiv Atom feed parsing |
+| [`rapidfuzz`](https://rapidfuzz.github.io/RapidFuzz/) | Fuzzy title matching for deduplication |
+| [`pyzotero`](https://pyzotero.readthedocs.io) | Zotero Web API client |
 | [`python-dateutil`](https://dateutil.readthedocs.io) | Flexible date parsing |
-| [`beautifulsoup4`](https://www.crummy.com/software/BeautifulSoup/) | HTML parsing for Google Scholar |
 | [`python-dotenv`](https://saurabh-kumar.com/python-dotenv/) | `.env` file loading |

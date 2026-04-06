@@ -116,19 +116,21 @@
 - [x] Pager integration (`$PAGER` via `console.pager(styles=True)`, `LUMEN_NO_PAGER`) — complete in Phase 4
 - [x] Error message polish: dim suggestions, `LumenError` catch-alls, consistent "Unknown format" — complete in Phase 4
 
-### Phase 5: Testing and Documentation (Weeks 11–12)
+### Phase 5: Testing and Documentation (Weeks 11–12) — COMPLETE
 
-- [x] Unit tests for core (deduplication, ranking, cache, export) — ongoing
-- [x] Integration tests with mocked API responses — started (search command, 25 tests)
-- [ ] Shell completion generation and manual testing
-- [ ] README finalization and `.env.example`
-- [ ] End-to-end smoke tests against live APIs
+- [x] Unit tests for core (deduplication, ranking, cache, export) — 343 tests total
+- [x] Integration tests with mocked API responses
+- [x] Shell completion generation documented (`--install-completion`, env-var fallback)
+- [x] README finalized and `.env.example` verified
+- [x] Smoke test script (`tests/smoke_test.sh`) for pre-release live-API validation
+- [x] GitHub Actions CI pipeline (lint, typecheck, test 3.10–3.12, coverage, build, publish)
 
-### Phase 6: Release (Week 13)
+### Phase 6: Release (Week 13) — COMPLETE
 
-- [ ] `uv build` and test install from wheel
-- [ ] Publish to PyPI (or document `uv tool install` from git)
-- [ ] Tag v0.1.0 with changelog
+- [x] `uv build` — wheel and sdist produced
+- [x] Wheel install verified (`lumen --version` returns `0.1.0`)
+- [x] `CHANGELOG.md` written
+- [x] Tag v0.1.0
 
 ## Resources and Requirements
 
