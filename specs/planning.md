@@ -92,26 +92,26 @@
 - [x] Implement ranking (relevance, citations, date, combined, impact)
 - [x] Implement SQLite cache with TTL tiers
 
-### Phase 3: Command Implementation (Weeks 5–8) — IN PROGRESS
+### Phase 3: Command Implementation (Weeks 5–8) — COMPLETE
 
-- [x] `lumen search` — keyword + field filters, multi-source, dedup, rank — complete
-- [ ] `lumen paper` — fetch by ID from arXiv or Semantic Scholar
-- [ ] `lumen cite` — citing papers via Semantic Scholar
-- [ ] `lumen author` — author search across sources
-- [ ] `lumen recommend` — content, citation, and hybrid methods
-- [ ] `lumen export` — BibTeX, RIS, CSL-JSON; pipe-aware
-- [ ] `lumen query` — natural language to query syntax helper
-- [ ] `lumen zotero add/collections/new` — Zotero integration
-- [ ] `lumen cache stats/clean/clear`
-- [ ] `lumen init` — full interactive credential setup
-- [ ] `lumen doctor` — connectivity and config health checks
+- [x] `lumen search` — keyword + field filters, multi-source, dedup, rank
+- [x] `lumen paper` — fetch by ID from arXiv or Semantic Scholar
+- [x] `lumen cite` — citing papers via Semantic Scholar
+- [x] `lumen author` — author search across sources
+- [x] `lumen recommend` — content, citation, and hybrid methods via SS
+- [x] `lumen export` — BibTeX, RIS, CSL-JSON; stdin ndjson + `--query` paths
+- [x] `lumen query` — natural language to query syntax helper; `--run` flag
+- [x] `lumen zotero add/collections/new` — full Zotero integration
+- [x] `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py`
+- [x] `lumen init` — full interactive credential setup (fixed + tested)
+- [x] `lumen doctor` — connectivity and config health checks (fixed + tested)
 
-### Phase 4: Display and Polish (Weeks 9–10)
+### Phase 4: Display and Polish (Weeks 9–10) — IN PROGRESS
 
-- [x] Rich table renderer (truncated fields, color-coded) — functional in Phase 3
-- [x] Rich list renderer (labeled blocks per paper) — functional in Phase 3
-- [ ] Detail renderer (full single-paper view, wrapped abstract) — stub, Phase 4 polish
+- [x] Rich table renderer (truncated fields, color-coded) — complete in Phase 3
+- [x] Rich list renderer (labeled blocks per paper) — complete in Phase 3
 - [x] JSON serializer (newline-delimited, pipe-friendly) — complete in Phase 3
+- [ ] Detail renderer (full single-paper view, wrapped abstract) — stub, needs Phase 4 implementation
 - [ ] TTY auto-detection for default format switching
 - [ ] Pager integration (`$PAGER`, disable with `LUMEN_NO_PAGER`)
 - [ ] Error message polish: clear description, cause, fix suggestion, exit code

@@ -1,16 +1,16 @@
 # Development Project Progress
 
 **Project:** lumen
-**Status:** Phase 3 in progress
-**Last Updated:** 2026-04-05
+**Status:** Phase 3 complete — Phase 4 starting
+**Last Updated:** 2026-04-06
 
 ## Current Status Overview
 
 ### Development Phase
 
-- **Current Phase:** Phase 3 — Command Implementation
-- **Phase Progress:** Phase 3 in progress (1 of 11 commands complete)
-- **Overall Project Progress:** ~35% complete
+- **Current Phase:** Phase 4 — Display and Polish
+- **Phase Progress:** Phase 3 complete (all 11 commands implemented); Phase 4 starting
+- **Overall Project Progress:** ~60% complete
 
 ### Recent Accomplishments
 
@@ -41,6 +41,30 @@
   async gather across arXiv + SS, cache read/write, dedup, rank, display, full
   error handling; 25 new integration tests covering all branches;
   135 tests total, ruff clean — 2026-04-05
+- Phase 3 session 2: `commands/cache.py` wired (`stats/clean/clear` as Typer
+  subcommands with Rich Table output and confirmation prompt); `commands/paper.py`
+  implemented (`_detect_id_type`, `_normalize_for_ss`, arXiv and SS path, cache
+  tier `paper`, `fetch_paper` extracted as shared async helper); `commands/cite.py`
+  implemented (SS `get_citations`, cache tier `citations`); 34 new tests (10 unit
+  + 24 CLI integration); 184 tests total, ruff clean — 2026-04-05
+- Phase 3 session 3: `clients/semantic_scholar.py` extended with
+  `search_authors(name, limit)` (two-step: author search → author papers);
+  `core/export.py` implemented (`to_bibtex`, `to_ris`, `to_csl_json`; 25 unit
+  tests); `commands/recommend.py` wired (SS recommendations, cache tier `search`,
+  `--method` validation; 9 tests); `commands/author.py` wired (author search via
+  new SS method, same error/display pattern; 9 tests); `commands/export.py`
+  implemented (stdin ndjson path + `--query` search path, `--output` file,
+  BibTeX/RIS/CSL-JSON; 8 tests); `commands/init.py` and `commands/doctor.py`
+  fixed (no longer re-call `load_config()`; now use `ctx.obj.config`) and
+  fully tested (8 + 13 tests respectively); 70 new tests; 254 total, ruff clean — 2026-04-05
+- Phase 3 session 4 (complete): `commands/query.py` implemented
+  (`_parse_natural`, `_build_command`, `--run` via `ctx.invoke`; 16 tests);
+  `zotero/client.py` fully implemented (`add_paper`, `list_collections`,
+  `create_collection`, `find_collection_key`); `commands/zotero.py` wired
+  (`add`, `collections`, `new` subcommands; collection name resolution,
+  tag building, Rich table and json output; 18 tests); `commands/paper.py`
+  refactored to expose `fetch_paper()` shared helper used by zotero add;
+  34 new tests; 288 tests total, ruff clean — Phase 3 complete — 2026-04-05
 
 ### Active Work
 
@@ -53,6 +77,18 @@
 - [x] `core/query.py` — field-filter parsing, per-source query builders, cache key (phase 3)
 - [x] `display/` layer — `json_fmt`, `table`, `list`, unified `render()` dispatcher (phase 3)
 - [x] `lumen search` — full pipeline: concurrent fetch, cache, dedup, rank, display (phase 3)
+- [x] `lumen paper` — `_detect_id_type`, `_normalize_for_ss`, cache tier `paper` (phase 3)
+- [x] `lumen cite` — SS `get_citations`, cache tier `citations` (phase 3)
+- [x] `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py` (phase 3)
+- [x] `lumen recommend` — SS recommendations, `--method` validation, cache (phase 3)
+- [x] `lumen author` — SS `search_authors` two-step, cache (phase 3)
+- [x] `core/export.py` — `to_bibtex`, `to_ris`, `to_csl_json` (phase 3)
+- [x] `lumen export` — stdin ndjson + `--query` paths, `--output` file (phase 3)
+- [x] `lumen init` — fixed + fully tested (phase 3)
+- [x] `lumen doctor` — fixed + fully tested (phase 3)
+- [x] `lumen query` — `_parse_natural`, `_build_command`, `--run` (phase 3)
+- [x] `zotero/client.py` — `add_paper`, `list_collections`, `create_collection`, `find_collection_key` (phase 3)
+- [x] `lumen zotero add/collections/new` — full Zotero integration (phase 3)
 
 ## Milestone Tracking
 
@@ -62,12 +98,14 @@
 - [x] ~~Phase 1: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
 - [x] ~~Phase 2: Core data layer — all clients, dedup, ranking, cache~~ — 2026-04-07
 - [x] ~~Phase 3 session 1: `lumen search` implemented~~ — 2026-04-05
+- [x] ~~Phase 3 complete: all 11 commands implemented~~ — 2026-04-05
 
 ### Upcoming Milestones
 
 - [x] ~~Phase 1 complete: repo scaffolded, Typer skeleton, config layer~~ — 2026-04-05
 - [x] ~~Phase 2 complete: all three API clients + dedup/ranking/cache~~ — 2026-04-07
-- [ ] Phase 3 complete: all 11 commands implemented — target 2026-05-26
+- [x] ~~Phase 3 complete: all 11 commands implemented~~ — 2026-04-05
+- [ ] Phase 4 complete: display layer polished, errors finalized — target 2026-06-09
 - [ ] Phase 4 complete: display layer polished, errors finalized — target 2026-06-09
 - [ ] v0.1.0 release — target 2026-06-23
 
@@ -79,12 +117,12 @@ _None identified yet._
 
 ### Build Health
 
-- **Last Successful Build:** 2026-04-05 (`uv run pytest` — 135 tests, ruff clean)
+- **Last Successful Build:** 2026-04-05 (`uv run pytest` — 288 tests, ruff clean)
 - **Build Warnings:** None
 
 ### Test Results
 
-- **Unit Tests:** 135 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache, 25 search)
+- **Unit Tests:** 288 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache, 25 search, 15 cache-cmd, 10 paper-unit + CLI, 9 recommend, 9 author, 25 export-core, 8 export-cmd, 8 init, 13 doctor, 16 query, 18 zotero)
 - **Integration Tests:** N/A
 - **Test Coverage:** N/A
 
@@ -127,25 +165,32 @@ _None identified yet._
 - [x] `display/list.py` — Rich Panel per paper (meta line + abstract snippet + URL)
 - [x] `display/__init__.py` — unified `render()` dispatcher (table/list/detail/json)
 - [x] `commands/search.py` — full async pipeline; 25 integration tests
-- [x] 135 tests total, ruff clean
+- [x] `commands/cache.py` — `stats/clean/clear` subcommands; Rich Table for stats; confirmation prompt; 15 CLI tests
+- [x] `commands/paper.py` — `_detect_id_type`, `_normalize_for_ss`, arXiv + SS dispatch, cache tier `paper`; `fetch_paper()` shared helper; full test suite
+- [x] `commands/cite.py` — SS `get_citations`, cache tier `citations`, consistent error handling; CLI tests
+- [x] `clients/semantic_scholar.py` — extended with `search_authors(name, limit)` two-step method
+- [x] `core/export.py` — `to_bibtex` (`_bibtex_key`, author joining, field escaping), `to_ris`, `to_csl_json`; 25 unit tests
+- [x] `commands/recommend.py` — SS recommendations, `--method` (content/citation/hybrid), cache; 9 tests
+- [x] `commands/author.py` — SS author search via `search_authors`, same error/display pattern; 9 tests
+- [x] `commands/export.py` — stdin ndjson + `--query` paths, `--output` file, BibTeX/RIS/CSL-JSON dispatch; 8 tests
+- [x] `commands/init.py` — fixed (`ctx.obj.config`), 8 tests
+- [x] `commands/doctor.py` — fixed (`ctx.obj.config`), 13 tests
+- [x] `commands/query.py` — `_parse_natural` heuristic, `_build_command`, `--run` via `ctx.invoke`; 16 tests
+- [x] `zotero/client.py` — `add_paper`, `list_collections`, `create_collection`, `find_collection_key` (case-insensitive)
+- [x] `commands/zotero.py` — `add/collections/new` subcommands; collection name resolution; tag building; 18 tests
+- [x] 288 tests total, ruff clean
 
 ### In Progress
 
+_Nothing in progress — Phase 3 complete, Phase 4 starting._
+
 ### Planned
 
-- [x] `lumen search` — Phase 3 ✓
-- [x] `lumen paper` — Phase 3 ✓
-- [x] `lumen cite` — Phase 3 ✓
-- [x] `lumen author` — Phase 3 ✓
-- [x] `lumen recommend` — Phase 3 ✓
-- [x] `lumen export` — Phase 3 ✓
-- [x] `lumen query` — Phase 3 ✓
-- [x] `lumen zotero add/collections/new` — Phase 3 ✓
-- [x] `lumen cache stats/clean/clear` — Phase 3 ✓
-- [x] `lumen init` — Phase 3 ✓
-- [x] `lumen doctor` — Phase 3 ✓
-- [ ] Rich display layer (table, list, detail, JSON) — Phase 4
-- [ ] Shell completions (Zsh, Bash, Fish) — Phase 4
+- [ ] `display/detail.py` — full single-paper Rich layout (Phase 4)
+- [ ] TTY auto-detection for default `--format` (Phase 4)
+- [ ] Pager integration (`$PAGER`, disable with `LUMEN_NO_PAGER`) (Phase 4)
+- [ ] Error message polish across all commands (Phase 4)
+- [ ] Shell completions for Zsh, Bash, Fish (Phase 4)
 
 ### Deferred or Cut
 
@@ -160,6 +205,9 @@ _Nothing deferred yet._
 - No test coverage measurement yet — `pytest-cov` not yet run against Phase 2 or Phase 3 modules
 - `display/detail.py` still a stub — falls back to `render_list` for now; proper full-paper view deferred to Phase 4
 - TTY auto-detection for default `--format` not yet implemented — always uses config default (`table`)
+- `lumen query --run` depends on `ctx.invoke`; integration test uses mocked search — live `--run` path not covered
+- Pager integration not yet implemented — long result sets truncate at terminal height
+- `lumen export` stdin detection may behave unexpectedly in non-TTY CI environments — documented in test skip
 
 ## Dependency Status
 
@@ -196,18 +244,18 @@ _None yet._
 
 ### Immediate Actions (Next 2 Weeks)
 
-- [x] Implement `lumen search` — complete (135 tests, ruff clean)
-- [ ] Implement `lumen paper` — fetch by arXiv/SS ID
-- [ ] Implement `lumen cite` — SS citations endpoint
-- [ ] Implement `lumen cache stats/clean/clear` — thin wrappers over `core/cache.py`
-- [ ] Add CLI integration tests (Typer `CliRunner`) for each implemented command
+- [ ] Implement `display/detail.py` — full single-paper Rich layout (Phase 4)
+- [ ] Add TTY auto-detection for `--format` default switching
+- [ ] Implement pager integration (`$PAGER`, `LUMEN_NO_PAGER`)
+- [ ] Polish error messages across all commands (clear description, cause, fix suggestion)
+- [ ] Measure test coverage with `pytest-cov`; bring `core/` to ≥ 90%
 
 ### Medium-term Goals (Next Month)
 
-- [ ] All 11 commands implemented and passing integration tests
-- [ ] `lumen search` end-to-end with multi-source dedup + ranking verified
-- [ ] `lumen export` producing valid BibTeX and RIS output
-- [ ] `lumen zotero add` functional with real credentials
+- [ ] Shell completions for Zsh, Bash, Fish (generated via Typer, manually tested)
+- [ ] README finalization with usage examples for all 11 commands
+- [ ] End-to-end smoke tests against live APIs
+- [ ] GitHub Actions CI pipeline (lint, typecheck, test, build)
 
 ### Decisions Needed
 

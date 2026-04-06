@@ -1,8 +1,8 @@
 # Development Implementation Details
 
 **Project:** lumen
-**Status:** Phase 2 complete
-**Last Updated:** 2026-04-07
+**Status:** Phase 3 complete — Phase 4 starting
+**Last Updated:** 2026-04-06
 
 ## Architecture
 
@@ -75,7 +75,16 @@ lumen/
     ├── test_deduplication.py        # deduplicate, _merge, helpers (24 tests)
     ├── test_ranking.py              # rank, scoring functions (22 tests)
     ├── test_cache.py                # Cache get/set/clean/clear/stats (19 tests)
-    └── test_search.py               # lumen search CLI integration (25 tests)
+    ├── test_search.py               # lumen search CLI integration (25 tests)
+    ├── test_cache_cmd.py            # lumen cache CLI integration (15 tests)
+    ├── test_paper.py                # lumen paper unit + CLI integration
+    ├── test_recommend.py            # lumen recommend CLI integration (9 tests)
+    ├── test_author.py               # lumen author CLI integration (9 tests)
+    ├── test_export.py               # core/export unit (25) + lumen export CLI (8)
+    ├── test_init.py                 # lumen init CLI integration (8 tests)
+    ├── test_doctor.py               # lumen doctor CLI integration (13 tests)
+    ├── test_query.py                # lumen query unit + CLI integration (16 tests)
+    └── test_zotero.py               # lumen zotero CLI integration (18 tests)
 ```
 
 ### Key Modules
@@ -174,9 +183,75 @@ lumen/
     - **Exit codes:** 0 success, 1 source error, 2 usage/validation error, 4 no results
     - **Dependencies:** all clients, `core/query.py`, `core/cache.py`, `core/deduplication.py`, `core/ranking.py`, `display/`
 
-*(Legacy placeholder, kept for completeness:)*
+13. **`commands/cache.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen cache stats/clean/clear` as Typer subcommands
+    - **`stats`:** renders a Rich Table of entries per tier, total count, db path, and file size
+    - **`clean`:** removes expired entries; accepts optional `--tier` filter; reports count removed
+    - **`clear`:** removes all entries with `--yes` bypass or interactive confirmation prompt; tier-specific or full
+    - **Validation:** invalid tier name → `UsageError` → exit 2
+    - **Dependencies:** `core/cache.py`
 
-7. **`display/`** — see entries 9–12 above for the implemented modules
+14. **`commands/paper.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen paper <id>` — fetch a single paper by any recognized ID format
+    - **`_detect_id_type(id)`:** classifies IDs as `arxiv` (bare, versioned, URL, `arXiv:` prefix), `doi` (bare, `doi.org` URL, `DOI:` prefix), `semantic_scholar` (40-char hex), or `unknown`
+    - **`_normalize_for_ss(id, id_type)`:** builds SS-compatible `ARXIV:`, `DOI:`, or bare SS ID strings
+    - **Routing:** arXiv IDs → `ArxivClient.get_by_id()`; all others → `SemanticScholarClient.get_by_id()`
+    - **`fetch_paper(id, config, cache)`:** shared async helper (returns `Paper` without rendering); used by `lumen zotero add`
+    - **Cache:** tier `paper`; key `paper:{source}:{id}`
+    - **Dependencies:** both clients, `core/cache.py`, `display/`
+
+15. **`commands/recommend.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen recommend <id>` — content-based or citation-based recommendations
+    - **`--method`:** `content`, `citation`, or `hybrid`; all currently route to SS `get_recommendations()` (method distinctions reserved for v1.1 with ML embeddings)
+    - **ID handling:** reuses `_detect_id_type` / `_normalize_for_ss` from `commands/paper`
+    - **Cache:** tier `search`; cache key incorporates method and limit
+    - **Dependencies:** `clients/semantic_scholar.py`, `core/cache.py`, `display/`
+
+16. **`commands/author.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen author <name>` — find papers by an author
+    - **Pipeline:** `SemanticScholarClient.search_authors(name, limit)` → rank → render
+    - **Cache:** tier `search`; key `author:{name}:{limit}`
+    - **Error handling:** same pattern as `lumen cite` (SourceError → exit 1, NoResultsError → exit 4)
+    - **Dependencies:** `clients/semantic_scholar.py`, `core/ranking.py`, `core/cache.py`, `display/`
+
+17. **`core/export.py`** *(Phase 3 — complete)*
+    - **Purpose:** Bibliography formatters converting `list[Paper]` to BibTeX, RIS, and CSL-JSON strings
+    - **`to_bibtex(papers)`:** `@article` entries; `_bibtex_key()` generates `SurnameYear` key; authors joined with ` and `; brace-escapes `{}` and backslashes
+    - **`to_ris(papers)`:** `TY`, `TI`, `AU` (one per author), `PY`, `JO`, `DO`, `UR`, `AB`, `ER` records per paper
+    - **`to_csl_json(papers)`:** JSON array; author objects with `given`/`family` split; `issued` with `date-parts`; `container-title` from venue; `DOI`, `URL`
+    - **Dependencies:** `core/models.py`, `json` (stdlib)
+
+18. **`commands/export.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen export` — convert papers to bibliography format
+    - **Stdin path:** reads ndjson lines from stdin (piped from `lumen search --format json`); parses with `Paper.model_validate_json()`
+    - **`--query` path:** runs concurrent arXiv + SS search (same pipeline as `lumen search`), deduplicates, then formats
+    - **`--output`:** writes to file; defaults to stdout
+    - **Format dispatch:** `bibtex` → `to_bibtex`; `ris` → `to_ris`; `csl-json` → `to_csl_json`
+    - **Exit codes:** 2 on invalid format or non-TTY stdin with no data; 4 on empty result set
+
+19. **`commands/query.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen query <natural-language>` — heuristic NL-to-query-syntax helper
+    - **`_parse_natural(text)`:** extracts 4-digit year, author surname (capitalized token immediately before year, filtered against stop words), and remaining tokens as keyword terms (stop words removed)
+    - **`_build_command(parsed)`:** renders a `lumen search ...` command string with flags for each extracted field
+    - **`--run`:** invokes `search` command in-process via `ctx.invoke` with parsed kwargs; prints command first
+    - **Dependencies:** `commands/search.py` (for `--run`), `re` (stdlib)
+
+20. **`zotero/client.py`** *(Phase 3 — complete)*
+    - **Purpose:** `pyzotero` wrapper for Zotero Web API operations
+    - **`add_paper(paper, collection_key, tags)`:** builds a `journalArticle` item template; populates creators, tags, and optional collection; calls `zot.create_items()`; returns item key
+    - **`list_collections()`:** returns all top-level and nested collections as list of `{key, name, parentKey}` dicts
+    - **`create_collection(name, parent_key)`:** creates a new collection; returns new collection key
+    - **`find_collection_key(name)`:** case-insensitive name lookup across all collections; returns key or `None`
+    - **Auth:** `library_id`, `library_type`, `api_key` read from `Config.credentials`; `ConfigError` raised if absent
+    - **Dependencies:** `pyzotero`, `core/models.py`
+
+21. **`commands/zotero.py`** *(Phase 3 — complete)*
+    - **Purpose:** Implements `lumen zotero add/collections/new` subcommands
+    - **`add <id>`:** fetches paper via `fetch_paper()`, resolves optional `--collection` by name, builds tag list from categories + `--tags`, calls `ZoteroClient.add_paper()`; reports item key
+    - **`collections`:** lists all Zotero collections as Rich table (`key`, `name`, `parent`) or json
+    - **`new <name>`:** optional `--parent` (resolved by name via `find_collection_key`); calls `create_collection()`; reports new key
+    - **ConfigError** (missing credentials) → exit 3 throughout
+    - **Dependencies:** `zotero/client.py`, `commands/paper.py` (`fetch_paper`), `display/`
 
 ### Data Model
 
