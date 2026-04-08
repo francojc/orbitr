@@ -103,6 +103,46 @@ Initial release.
     precedence over `config.toml` at runtime); this fix closes the init-time
     loophole.
 
+## [0.2.0] — 2026-04-08
+
+### Added
+
+**Zotero library browsing (Phase 7)**
+
+- `orbitr zotero list` — browse items in the full library or a specific
+  collection; options: `--collection/-c`, `--limit/-n`, `--sort`
+  (dateModified/title/date), `--format/-f` (table/json/keys)
+- `orbitr zotero get <item_key>` — full item detail with authors, abstract,
+  DOI, URL, tags, notes (HTML-stripped), and PDF attachment path; options:
+  `--format/-f` (detail/json), `--notes/--no-notes`
+- `orbitr zotero search <query>` — full-text search within the Zotero library
+  via pyzotero `q` parameter; options: `--collection/-c`, `--limit/-n`,
+  `--format/-f` (table/json/keys)
+- `orbitr zotero export-md <item_key>` — export a Zotero item as a Markdown
+  file with YAML frontmatter (title, authors, year, doi, zotero_key,
+  zotero_url, tags, type); options: `--output/-o` (file or directory; when a
+  directory is given the filename is auto-generated as `YYYY-Author-Slug.md`);
+  defaults to stdout for pipeline use
+- `--format keys` on `zotero list` and `zotero search` outputs bare item keys
+  one-per-line, enabling pipeline composition:
+  `orbitr zotero list -c "NLP" --format keys | xargs -I{} orbitr zotero export-md {} -o kb/`
+
+**ZoteroClient new methods** (`zotero/client.py`)
+
+- `list_items(collection_key, limit, sort, direction, item_type)` — scoped or
+  full-library listing; uses pyzotero `everything()` for `limit > 100`
+- `get_item(item_key, include_children)` — fetches item metadata, notes, and
+  attachment dicts via two pyzotero calls
+- `search_items(query, collection_key, limit)` — delegates to pyzotero `q`
+  parameter for full-text search
+
+### Test coverage
+
+- 410 tests (was 288 in v0.1.0 / 343 in smoke-tested state)
+- 19 new client unit tests (`test_zotero_client.py`)
+- 49 new CLI integration tests (new `zotero list/get/search/export-md` classes
+  in `test_zotero.py`)
+
 ## Unreleased
 
 _Nothing yet._

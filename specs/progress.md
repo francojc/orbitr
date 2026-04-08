@@ -2,15 +2,15 @@
 
 **Project:** orbitr
 **Status:** Active development — v0.2.0
-**Last Updated:** 2026-04-06
+**Last Updated:** 2026-04-08
 
 ## Current Status Overview
 
 ### Development Phase
 
-- **Current Phase:** Phase 7 — Zotero Library Enhancements
-- **Phase Progress:** Phases 1–6 complete; Phase 7 planned
-- **Overall Project Progress:** v0.1.0 shipped; v0.2.0 in planning
+- **Current Phase:** Phase 7 complete
+- **Phase Progress:** Phases 1–7 complete
+- **Overall Project Progress:** v0.1.0 shipped; v0.2.0 complete
 
 ### Recent Accomplishments
 
@@ -66,6 +66,8 @@
   refactored to expose `fetch_paper()` shared helper used by zotero add;
   34 new tests; 288 tests total, ruff clean — Phase 3 complete — 2026-04-05
 
+- Phase 7 complete: `zotero list/get/search/export-md` implemented, 410 tests passing — 2026-04-08
+
 ### Active Work
 
 - [x] Pydantic models (`Paper`, `Author`, `SearchResult`) — tested (15 tests)
@@ -101,11 +103,12 @@
 - [x] ~~Phase 4: display layer polished, errors finalized~~ — 2026-04-06
 - [x] ~~Phase 5: testing and documentation~~ — 2026-04-06
 - [x] ~~Phase 6: v0.1.0 released~~ — 2026-04-06
+- [x] ~~Phase 7 complete: `zotero list/get/search/export-md` implemented and tested~~ — 2026-04-08
+- [x] ~~v0.2.0 released~~ — 2026-04-08
 
 ### Upcoming Milestones
 
-- [ ] Phase 7 complete: `zotero list/get/search/export-md` implemented and tested
-- [ ] v0.2.0 release
+_None — v0.2.0 complete._
 
 ### At-Risk Milestones
 
@@ -115,12 +118,12 @@ _None identified yet._
 
 ### Build Health
 
-- **Last Successful Build:** 2026-04-05 (`uv run pytest` — 288 tests, ruff clean)
+- **Last Successful Build:** 2026-04-08 (`uv run pytest` — 410 tests, ruff clean, pyright clean)
 - **Build Warnings:** None
 
 ### Test Results
 
-- **Unit Tests:** 288 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache, 25 search, 15 cache-cmd, 10 paper-unit + CLI, 9 recommend, 9 author, 25 export-core, 8 export-cmd, 8 init, 13 doctor, 16 query, 18 zotero)
+- **Unit Tests:** 410 passing (15 models, 15 arXiv, 15 SS, 24 dedup, 22 ranking, 19 cache, 25 search, 15 cache-cmd, 10 paper-unit + CLI, 9 recommend, 9 author, 25 export-core, 8 export-cmd, 8 init, 13 doctor, 16 query, 18 zotero-original, 19 zotero-client, 49 zotero-new-commands, +display_phase4 and others)
 - **Integration Tests:** N/A
 - **Test Coverage:** N/A
 
@@ -180,17 +183,11 @@ _None identified yet._
 
 ### In Progress
 
-_Nothing in progress._
+_Nothing in progress — v0.2.0 shipped._
 
 ### Planned
 
-- [ ] `zotero/client.py` — `list_items()`, `get_item()`, `search_items()` methods
-- [ ] `orbitr zotero list` — browse items in a collection or full library (`--collection`, `--limit`, `--sort`, `--format`)
-- [ ] `orbitr zotero get <item_key>` — full item detail with notes and attachments (`--format`, `--notes`)
-- [ ] `orbitr zotero search <query>` — full-text search within the Zotero library (`--collection`, `--limit`, `--format`)
-- [ ] `orbitr zotero export-md <item_key>` — export item as markdown with YAML frontmatter (`--output`)
-- [ ] All new `zotero` commands: `--format keys` pipeable output
-- [ ] Tests for all four new subcommands
+_Nothing planned — v0.2.0 complete._
 
 ### Deferred or Cut
 
@@ -248,14 +245,11 @@ _None yet._
 
 ### Immediate Actions (Next 2 Weeks)
 
-- [ ] Implement `ZoteroClient.list_items()`, `get_item()`, `search_items()` in `zotero/client.py`
-- [ ] Implement `orbitr zotero list`, `get`, `search`, `export-md` in `commands/zotero.py`
-- [ ] Write tests for all four new subcommands (extend `tests/test_zotero.py`; add fixtures)
+- [ ] Tag v0.2.0 and cut a release via `just release`
 
 ### Medium-term Goals (Next Month)
 
-- [ ] Update `CHANGELOG.md` for v0.2.0
-- [ ] Tag and release v0.2.0
+- [ ] Plan v0.3.0 features (Google Scholar v1.1, improved recommendations, etc.)
 
 ### Decisions Needed
 
