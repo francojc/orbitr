@@ -24,6 +24,13 @@ all without leaving the shell.
   - [export](#orbitr-export)
   - [query](#orbitr-query)
   - [zotero](#orbitr-zotero)
+    - [add](#orbitr-zotero-add)
+    - [collections](#orbitr-zotero-collections)
+    - [new](#orbitr-zotero-new)
+    - [list](#orbitr-zotero-list)
+    - [get](#orbitr-zotero-get)
+    - [search](#orbitr-zotero-search)
+    - [export-md](#orbitr-zotero-export-md)
   - [cache](#orbitr-cache)
   - [init](#orbitr-init)
   - [doctor](#orbitr-doctor)
@@ -120,6 +127,16 @@ orbitr search "in-context learning" --format json \
 
 # Add a paper to Zotero
 orbitr zotero add 2503.19260 --collection "Reading List" --tags "llm,linguistics"
+
+# Browse a Zotero collection
+orbitr zotero list -c "Reading List"
+
+# Inspect a single Zotero item (use a key from zotero list)
+orbitr zotero get ABCD1234
+
+# Bulk export a collection as Markdown files
+orbitr zotero list -c "Reading List" --format keys \
+  | xargs -I{} orbitr zotero export-md {} -o notes/
 ```
 
 ---
@@ -425,6 +442,157 @@ orbitr zotero new "Chapter 3" --parent "PhD Research"
 
 ---
 
+#### `orbitr zotero list`
+
+Browse items in your Zotero library or a specific collection. `--format keys`
+outputs bare item keys one-per-line for use with `xargs`.
+
+```
+orbitr zotero list [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--collection` | `-c` | | Collection name or key; omit for the whole library |
+| `--limit` | `-n` | `25` | Maximum items to return |
+| `--sort` | | `dateModified` | `dateModified`, `title`, or `date` |
+| `--format` | `-f` | `table` | `table`, `json`, or `keys` |
+
+```bash
+# Browse the 25 most recently modified items
+orbitr zotero list
+
+# Scope to a collection, sorted by title
+orbitr zotero list -c "NLP" --sort title
+
+# Pipeable keys output
+orbitr zotero list -c "NLP" --format keys
+
+# JSON for scripting
+orbitr zotero list --limit 50 --format json | jq '.[].title'
+```
+
+---
+
+#### `orbitr zotero get`
+
+Show full metadata, abstract, notes, and attachment info for a single Zotero
+item. Displays a `PDF URI` line (`zotero://open-pdf/...`) when a PDF attachment
+is linked, which opens the file directly in Zotero's built-in viewer.
+
+```
+orbitr zotero get ITEM_KEY [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--format` | `-f` | `detail` | `detail` or `json` |
+| `--notes/--no-notes` | | `--notes` | Include or suppress Zotero notes |
+
+```bash
+orbitr zotero get ABCD1234
+orbitr zotero get ABCD1234 --no-notes
+orbitr zotero get ABCD1234 --format json
+```
+
+---
+
+#### `orbitr zotero search`
+
+Full-text search within your Zotero library. Optionally scoped to a collection.
+Supports the same `--format keys` pipeline pattern as `zotero list`.
+
+```
+orbitr zotero search QUERY [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--collection` | `-c` | | Scope search to this collection |
+| `--limit` | `-n` | `25` | Maximum results |
+| `--format` | `-f` | `table` | `table`, `json`, or `keys` |
+
+```bash
+orbitr zotero search "language model"
+orbitr zotero search "attention" -c "Transformers"
+orbitr zotero search "RLHF" --format keys
+```
+
+---
+
+#### `orbitr zotero export-md`
+
+Export a single Zotero item as a Markdown file with YAML frontmatter. When a
+PDF attachment is linked, `pdf_uri` is included in the frontmatter and a
+clickable `zotero://open-pdf/...` link appears in the body.
+
+Outputs to stdout by default. Pass `--output` with a file path or a directory;
+when a directory is given, the filename is auto-generated as
+`YYYY-Author-Short-Title.md`.
+
+```
+orbitr zotero export-md ITEM_KEY [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Short | Description |
+|---|---|---|
+| `--output` | `-o` | Output file or directory (default: stdout) |
+
+**Output format:**
+
+```markdown
+---
+title: "Paper Title"
+authors: [First Last, First Last]
+year: 2024
+doi: "10.xxxx/yyyy"
+zotero_key: ABCD1234
+zotero_url: "zotero://select/items/0_ABCD1234"
+pdf_uri: "zotero://open-pdf/library/items/EFGH5678"
+tags: [tag1, tag2]
+type: source
+---
+
+# Paper Title
+
+**Authors:** First Last, First Last  **Year:** 2024  **Venue:** Journal Name
+**DOI:** [10.xxxx/yyyy](https://doi.org/10.xxxx/yyyy)
+**PDF:** [zotero://open-pdf/...](zotero://open-pdf/...)
+
+## Abstract
+
+Abstract text.
+
+## Notes
+
+Zotero note content (if any).
+```
+
+```bash
+# Preview to stdout
+orbitr zotero export-md ABCD1234
+
+# Write to a file
+orbitr zotero export-md ABCD1234 -o kb/sources/raw/paper.md
+
+# Auto-generated filename in a directory
+orbitr zotero export-md ABCD1234 -o kb/sources/raw/
+
+# Bulk export an entire collection
+orbitr zotero list -c "NLP" --format keys \
+  | xargs -I{} orbitr zotero export-md {} -o kb/sources/raw/
+```
+
+---
+
 ### `orbitr cache`
 
 Manage the local SQLite result cache. Three tiers are maintained independently:
@@ -562,6 +730,14 @@ orbitr author "Danqi Chen" --format json \
 
 # Pipe into a custom script
 orbitr search "continual learning" --limit 20 --format json | python triage.py
+
+# Bulk-export a Zotero collection as Markdown files
+orbitr zotero list -c "Reading List" --format keys \
+  | xargs -I{} orbitr zotero export-md {} -o kb/sources/
+
+# Find Zotero items matching a keyword, export each as Markdown
+orbitr zotero search "transformer" --format keys \
+  | xargs -I{} orbitr zotero export-md {} -o kb/sources/
 ```
 
 ---
@@ -638,7 +814,7 @@ orbitr/
 │       │   ├── recommend.py    # orbitr recommend
 │       │   ├── export.py       # orbitr export
 │       │   ├── query.py        # orbitr query
-│       │   ├── zotero.py       # orbitr zotero add / collections / new
+│       │   ├── zotero.py       # orbitr zotero add / collections / new / list / get / search / export-md
 │       │   ├── cache.py        # orbitr cache stats / clean / clear
 │       │   ├── init.py         # orbitr init
 │       │   └── doctor.py       # orbitr doctor
@@ -654,7 +830,7 @@ orbitr/
 │       │   ├── export.py       # BibTeX, RIS, CSL-JSON formatters
 │       │   └── query.py        # field:value parsing; per-source query builders
 │       ├── zotero/
-│       │   └── client.py       # pyzotero wrapper
+│       │   └── client.py       # pyzotero wrapper: add, list/get/search items, collections
 │       └── display/
 │           ├── __init__.py     # render() dispatcher; effective_format(); pager
 │           ├── table.py        # Rich Table renderer
@@ -680,6 +856,7 @@ orbitr/
     ├── test_doctor.py
     ├── test_query.py
     ├── test_zotero.py
+    ├── test_zotero_client.py
     ├── test_display_phase4.py
     └── test_base_client.py
 ```
