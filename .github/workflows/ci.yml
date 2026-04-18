@@ -20,6 +20,7 @@ jobs:
       - run: uv sync --group dev
       - run: uv run ruff format --check src/ tests/
       - run: uv run ruff check src/ tests/
+      - run: uv run python scripts/check_docs_consistency.py
 
   typecheck:
     name: Type check

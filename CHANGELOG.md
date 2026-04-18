@@ -143,6 +143,30 @@ Initial release.
 - 49 new CLI integration tests (new `zotero list/get/search/export-md` classes
   in `test_zotero.py`)
 
+## [0.3.0] — 2026-04-17
+
+### Added
+
+- `orbitr zotero recent` subcommand for date-added browsing of recent Zotero entries.
+  - Supports `--days` and `--since` time windows.
+  - Supports `--collection/-c`, `--limit/-n`, and `--format/-f` (`table`, `json`, `keys`).
+  - Uses `dateAdded` descending sort for recency-first output.
+- Docs consistency guardrail script: `scripts/check_docs_consistency.py`.
+  - Validates `specs/planning.md` and `specs/progress.md` alignment for project, phase, and status version markers.
+- CI and local workflow integration for docs consistency checks.
+  - CI lint job now runs the docs check.
+  - `just check` includes docs consistency verification.
+  - New `just docs-check` recipe.
+
+### Changed
+
+- `zotero list --sort` accepted values now include `dateAdded`.
+
+### Fixed
+
+- `orbitr zotero recent` now excludes non-reference child item types by default (`annotation`, `attachment`, `note`).
+- Fixed `orbitr zotero recent --days ...` appearing to hang on large libraries by avoiding pyzotero `everything()` pagination in this path (single-page fetch `<= 100`).
+
 ## Unreleased
 
 _Nothing yet._

@@ -153,7 +153,7 @@ class ZoteroClient:
             limit: Maximum number of items to return.  When *limit* exceeds
                 the Zotero API cap (100 per request) pyzotero's built-in
                 ``everything()`` helper is used transparently.
-            sort: Zotero sort field (``dateModified``, ``title``, ``date``).
+            sort: Zotero sort field (e.g. ``dateModified``, ``dateAdded``, ``title``, ``date``).
             direction: ``"asc"`` or ``"desc"``.
             item_type: Optional Zotero item-type filter, e.g.
                 ``"journalArticle"``.

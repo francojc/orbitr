@@ -40,10 +40,15 @@ fmt:
 lint:
   uv run ruff check --fix src/ tests/
 
-# Check formatting and lint without modifying files (CI-safe)
+# Check formatting, lint, and docs consistency without modifying files (CI-safe)
 check:
   uv run ruff format --check src/ tests/
   uv run ruff check src/ tests/
+  uv run python scripts/check_docs_consistency.py
+
+# Run docs consistency guardrail only
+docs-check:
+  uv run python scripts/check_docs_consistency.py
 
 # Run pyright type checks
 types:

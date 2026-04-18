@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 
@@ -22,7 +23,7 @@ from orbitr.zotero.client import ZoteroClient
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-_VALID_SORTS = {"dateModified", "title", "date"}
+_VALID_SORTS = {"dateModified", "dateAdded", "title", "date"}
 _VALID_LIST_FMTS = {"table", "json", "keys"}
 _VALID_GET_FMTS = {"detail", "json"}
 
@@ -67,6 +68,56 @@ def _item_authors_full(data: dict) -> str:
 def _strip_html(text: str) -> str:
     """Remove HTML tags from a Zotero note string."""
     return re.sub(r"<[^>]+>", "", text).strip()
+
+
+def _parse_item_datetime(value: str) -> datetime | None:
+    """Parse Zotero datetime strings like '2026-04-17T10:23:45Z'."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _recent_cutoff(days: int | None, since: str | None) -> datetime | None:
+    """Compute cutoff datetime for recent filters."""
+    if since:
+        dt = _parse_item_datetime(f"{since}T00:00:00Z")
+        if dt is None:
+            raise ValueError("--since must be YYYY-MM-DD")
+        return dt
+    if days is not None:
+        return datetime.now(UTC) - timedelta(days=days)
+    return None
+
+
+_NON_REFERENCE_ITEM_TYPES = {"annotation", "attachment", "note"}
+
+
+def _filter_reference_items(items: list[dict]) -> list[dict]:
+    """Keep only bibliographic/reference items (exclude notes/attachments/annotations)."""
+    out: list[dict] = []
+    for item in items:
+        data = item.get("data", item)
+        item_type = str(data.get("itemType", "")).lower()
+        if item_type not in _NON_REFERENCE_ITEM_TYPES:
+            out.append(item)
+    return out
+
+
+def _filter_recent(items: list[dict], cutoff: datetime | None) -> list[dict]:
+    """Filter items by `data.dateAdded >= cutoff` when cutoff is given."""
+    if cutoff is None:
+        return items
+
+    out: list[dict] = []
+    for item in items:
+        data = item.get("data", item)
+        added = _parse_item_datetime(data.get("dateAdded", ""))
+        if added and added >= cutoff:
+            out.append(item)
+    return out
 
 
 def _item_table(items: list[dict], title: str = "Zotero items") -> Table:
@@ -649,6 +700,136 @@ def zotero_search(
 
     Console(no_color=cfg.no_color).print(
         _item_table(items, title=f"Zotero search: '{query}'")
+    )
+
+
+# ---------------------------------------------------------------------------
+# orbitr zotero recent
+# ---------------------------------------------------------------------------
+
+
+@app.command("recent")
+def zotero_recent(
+    ctx: typer.Context,
+    collection: Annotated[
+        str | None,
+        typer.Option(
+            "--collection", "-c", help="Scope to this collection name or key."
+        ),
+    ] = None,
+    days: Annotated[
+        int | None,
+        typer.Option(
+            "--days",
+            help="Only include items added in the last N days.",
+            min=1,
+        ),
+    ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option("--since", help="Only include items added since YYYY-MM-DD."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option("--limit", "-n", help="Maximum number of items to return."),
+    ] = 25,
+    fmt: Annotated[
+        str,
+        typer.Option("--format", "-f", help="Output format: table, json, keys."),
+    ] = "table",
+) -> None:
+    """Browse recently added Zotero reference items.
+
+    By default this excludes non-reference child item types such as
+    notes, attachments, and annotations. For keyword matching, use
+    `orbitr zotero search <query>`.
+
+    Examples:
+
+      orbitr zotero recent
+
+      orbitr zotero recent --days 14 --format keys
+
+      orbitr zotero recent --since 2026-04-01 -c "NLP"
+    """
+    if fmt not in _VALID_LIST_FMTS:
+        _err.print(
+            f"[red]Error:[/red] Unknown format '{fmt}'. Choose: {', '.join(sorted(_VALID_LIST_FMTS))}"
+        )
+        raise typer.Exit(code=2)
+
+    if days is not None and since is not None:
+        _err.print("[red]Error:[/red] Use either --days or --since, not both.")
+        raise typer.Exit(code=2)
+
+    try:
+        cutoff = _recent_cutoff(days, since)
+    except ValueError as exc:
+        _err.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    cfg = ctx.obj.config
+    try:
+        zot = _get_zotero(ctx)
+
+        collection_key: str | None = None
+        if collection:
+            collection_key = zot.find_collection_key(collection)
+            if collection_key is None:
+                if len(collection) == 8 and collection.isalnum():
+                    collection_key = collection
+                else:
+                    _err.print(
+                        f"[red]Error:[/red] Collection '{collection}' not found."
+                    )
+                    _err.print(
+                        "[dim]Run `orbitr zotero collections` to list collections.[/dim]"
+                    )
+                    raise typer.Exit(code=1)
+
+        # Keep this at <=100 so pyzotero does a single-page fetch instead of
+        # invoking `everything()` pagination, which can feel like a hang on
+        # large libraries.
+        fetch_limit = max(limit, 100) if cutoff else limit
+        fetch_limit = min(fetch_limit, 100)
+        items = zot.list_items(
+            collection_key=collection_key,
+            limit=fetch_limit,
+            sort="dateAdded",
+            direction="desc",
+        )
+        items = _filter_reference_items(items)
+        items = _filter_recent(items, cutoff)[:limit]
+
+    except ConfigError as exc:
+        _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
+        raise typer.Exit(code=3) from exc
+    except LumenError as exc:
+        _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
+        raise typer.Exit(code=1) from exc
+
+    if not items:
+        Console(no_color=cfg.no_color).print("[yellow]No recent items found.[/yellow]")
+        raise typer.Exit(code=4)
+
+    if fmt == "keys":
+        for item in items:
+            data = item.get("data", item)
+            typer.echo(data.get("key", item.get("key", "")))
+        return
+
+    if fmt == "json":
+        typer.echo(json.dumps([item.get("data", item) for item in items], indent=2))
+        return
+
+    scope = f" in '{collection}'" if collection else ""
+    qualifier = f" since {since}" if since else f" (last {days} days)" if days else ""
+    Console(no_color=cfg.no_color).print(
+        _item_table(items, title=f"Zotero recent items{scope}{qualifier}")
     )
 
 

@@ -290,6 +290,7 @@ _RAW_ITEMS = [
                 {"creatorType": "author", "firstName": "Noam", "lastName": "Shazeer"},
             ],
             "date": "2017-06-12",
+            "dateAdded": "2026-04-16T10:00:00Z",
             "publicationTitle": "arXiv",
             "abstractNote": "Transformer architecture.",
             "DOI": "10.48550/arXiv.1706.03762",
@@ -308,10 +309,23 @@ _RAW_ITEMS = [
                 {"creatorType": "author", "firstName": "Jacob", "lastName": "Devlin"},
             ],
             "date": "2018-10-11",
+            "dateAdded": "2026-03-01T10:00:00Z",
             "publicationTitle": "arXiv",
             "abstractNote": "BERT model.",
             "DOI": "",
             "url": "https://arxiv.org/abs/1810.04805",
+            "tags": [],
+            "collections": [],
+        },
+    },
+    {
+        "key": "ITEM0003",
+        "data": {
+            "key": "ITEM0003",
+            "itemType": "annotation",
+            "title": "",
+            "dateAdded": "2026-04-16T10:00:00Z",
+            "creators": [],
             "tags": [],
             "collections": [],
         },
@@ -585,6 +599,78 @@ class TestZoteroSearch:
                 "zotero", "search", "nlp", config=_test_config(creds=_NO_CREDS)
             )
         assert result.exit_code == 3
+
+
+# ---------------------------------------------------------------------------
+# orbitr zotero recent
+# ---------------------------------------------------------------------------
+
+
+class TestZoteroRecent:
+    def test_recent_defaults_to_date_added_sort(self):
+        zot = _zot_mock_full()
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "recent")
+        assert result.exit_code == 0
+        _, kwargs = zot.list_items.call_args
+        assert kwargs["sort"] == "dateAdded"
+        assert kwargs["direction"] == "desc"
+
+    def test_recent_days_filter(self):
+        zot = _zot_mock_full()
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "recent", "--days", "14", "--format", "keys")
+        assert result.exit_code == 0
+        _, kwargs = zot.list_items.call_args
+        assert kwargs["limit"] == 100
+        lines = [ln.strip() for ln in result.output.splitlines() if ln.strip()]
+        assert "ITEM0001" in lines
+        assert "ITEM0002" not in lines
+
+    def test_recent_since_filter(self):
+        zot = _zot_mock_full()
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke(
+                "zotero", "recent", "--since", "2026-04-01", "--format", "keys"
+            )
+        assert result.exit_code == 0
+        assert "ITEM0001" in result.output
+        assert "ITEM0002" not in result.output
+
+    def test_recent_excludes_non_reference_items(self):
+        zot = _zot_mock_full()
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "recent", "--since", "2026-04-01", "--format", "keys")
+        assert result.exit_code == 0
+        assert "ITEM0001" in result.output
+        assert "ITEM0003" not in result.output
+
+    def test_recent_rejects_days_and_since_together(self):
+        zot = _zot_mock_full()
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "recent", "--days", "7", "--since", "2026-04-01")
+        assert result.exit_code == 2
+
+    def test_recent_invalid_since_exits_2(self):
+        zot = _zot_mock_full()
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "recent", "--since", "2026/04/01")
+        assert result.exit_code == 2
+
+    def test_recent_collection_not_found_exits_1(self):
+        zot = _zot_mock_full()
+        zot.find_collection_key.return_value = None
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke(
+                "zotero", "recent", "--collection", "Nonexistent Collection XYZ"
+            )
+        assert result.exit_code == 1
+
+    def test_recent_no_results_exits_4(self):
+        zot = _zot_mock_full(items=[])
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "recent")
+        assert result.exit_code == 4
 
 
 # ---------------------------------------------------------------------------
