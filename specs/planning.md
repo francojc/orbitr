@@ -1,8 +1,8 @@
 # Development Project Planning
 
 **Project:** orbitr
-**Status:** Active development - v0.3.0 planning
-**Last Updated:** 2026-04-17
+**Status:** Active development - v0.4.0/v1.1 planning (v0.3.0 shipped)
+**Last Updated:** 2026-07-09
 
 ## Project Overview
 
@@ -33,6 +33,7 @@
 - [x] Robust help system, informative errors with suggestions, and `orbitr doctor` diagnostics
 - [x] Shell completions for Zsh, Bash, and Fish
 - [x] `orbitr init` guided setup for credentials and defaults
+- [ ] Karakeep API integration for personal bookmark search (read-only in v0.4)
 
 #### Non-Goals
 
@@ -43,6 +44,7 @@
 - No PDF text extraction or full-text indexing
 - No custom Jinja templates for `zotero export-md` in v0.2
 - No support for databases beyond arXiv and Semantic Scholar in v0.2 (Google Scholar deferred)
+- No Karakeep write/upload/sync operations in v0.4 (read-only search)
 - No multi-user or server mode
 
 ## Timeline and Milestones
@@ -102,51 +104,91 @@
 - [x] Tests for new client methods and subcommands
 - [x] v0.2.0 release and tag
 
-### Phase 8: v0.3.0 Planning and Reliability - ACTIVE
+### Phase 8: v0.3.0 Planning and Reliability - COMPLETE
 
-#### Milestone 8.1 - Scope and acceptance criteria (target: 2026-04-24)
+#### Milestone 8.1 - Scope and acceptance criteria (target: 2026-04-24; delivered 2026-04-17)
 
-- [ ] Define v0.3.0 feature scope (must-have / should-have / defer)
-- [ ] Define acceptance criteria per feature
-- [ ] Publish milestone issue list
-- [ ] Decide Zotero UX for recently added entries:
-  - [ ] Evaluate `zotero search --recent-*` extension vs dedicated `zotero recent`
-  - [ ] Preferred direction: keep `search` query-driven and add `zotero recent` as a browse workflow
-  - [ ] Define flags (`--days`, `--since`, `--collection`, `--limit`, `--format`) and output contracts
-- [ ] Define docs consistency guardrail policy:
-  - [ ] `specs/planning.md` and `specs/progress.md` must be updated in same PR for milestone/status changes
-  - [ ] Add CI check that fails on inconsistent project status/version/phase fields
+- [x] Define v0.3.0 feature scope (must-have: `zotero recent`, docs guardrail, coverage gate)
+- [x] Define acceptance criteria per feature
+- [x] Publish milestone issue list (captured in CHANGELOG and commits)
+- [x] Decide Zotero UX for recently added entries:
+  - [x] Evaluate `zotero search --recent-*` extension vs dedicated `zotero recent`
+  - [x] Preferred direction: keep `search` query-driven and add `zotero recent` as a browse workflow
+  - [x] Define flags (`--days`, `--since`, `--collection`, `--limit`, `--format`) and output contracts
+- [x] Define docs consistency guardrail policy:
+  - [x] `specs/planning.md` and `specs/progress.md` must be updated in same PR for milestone/status changes
+  - [x] Add CI check that fails on inconsistent project status/version/phase fields
 - [ ] Define API reliability posture for v0.3:
-  - [ ] Confirm whether `doctor` gets a deep mode (`doctor --deep`) with lightweight real queries and response-shape checks
-  - [ ] Require graceful `SourceError` wrapping and actionable suggestions for all network/API failures, including Zotero client calls
+  - [x] Confirm whether `doctor` gets a deep mode (`doctor --deep`) with lightweight real queries and response-shape checks — deferred to Phase 9
+  - [ ] Require graceful `SourceError` wrapping and actionable suggestions for all network/API failures, including Zotero client calls — moved to Phase 9
 
-#### Milestone 8.2 - Coverage baseline and CI gate (target: 2026-05-01)
+#### Milestone 8.2 - Coverage baseline and CI gate (target: 2026-05-01; delivered 2026-05-08)
 
-- [ ] Add `pytest-cov` config and baseline coverage report
-- [ ] Add minimum coverage threshold in CI
-- [ ] Document local coverage workflow in README/justfile
+- [x] Add `pytest-cov` config and baseline coverage report
+- [x] Add minimum coverage threshold in CI (80%)
+- [x] Document local coverage workflow in README/justfile
 
-#### Milestone 8.3 - API reliability and Google Scholar feasibility (target: 2026-05-15)
+#### Milestone 8.3 - API reliability and Google Scholar feasibility (target: 2026-05-15; partially delivered)
 
-- [ ] Implement reliability baseline for user-facing API failures:
-  - [ ] Ensure query/search command paths exit gracefully with clear message and fix suggestion
-  - [ ] Add Zotero client exception mapping to `SourceError` to avoid raw traceback leaks
-  - [ ] Add tests for network timeouts, 401/403, and transient 5xx failures across supported sources
+- [x] Implement reliability baseline for user-facing API failures:
+  - [x] Ensure query/search command paths exit gracefully with clear message and fix suggestion
+  - [ ] Add Zotero client exception mapping to `SourceError` to avoid raw traceback leaks — moved to Phase 9
+  - [ ] Add tests for network timeouts, 401/403, and transient 5xx failures across supported sources — moved to Phase 9
 - [ ] Evaluate enhanced health checks:
-  - [ ] Add optional `doctor --deep` mode with lightweight per-source semantic checks
-  - [ ] Keep default `doctor` fast and low-cost
-- [ ] Prototype Google Scholar best-effort client behind feature flag
-- [ ] Add fixture-driven tests for parser stability
+  - [ ] Add optional `doctor --deep` mode with lightweight per-source semantic checks — moved to Phase 9
+  - [x] Keep default `doctor` fast and low-cost
+- [ ] Prototype Google Scholar best-effort client behind feature flag — moved to Phase 9
+- [ ] Add fixture-driven tests for parser stability — moved to Phase 9
+- [ ] Decide ship/defer based on reliability criteria — moved to Phase 9
+
+#### Milestone 8.4 - Documentation and status operations (target: 2026-05-22; partially delivered)
+
+- [ ] Keep `specs/planning.md` and `specs/progress.md` synchronized weekly — cadence broken after 2026-04-17; restarted 2026-07-09
+- [ ] Reintroduce `logs/` weekly and session status cadence — broken after 2026-W16; restarted 2026-07-09
+- [x] Add release checklist updates for post-v0.2 workflow
+- [x] Implement docs consistency guardrail in CI:
+  - [x] Add script/check to validate phase, status, and current version alignment between planning and progress docs
+  - [x] Fail CI on drift and print a fix hint
+
+### Phase 9: Reliability Hardening and v1.1 Exploration - ACTIVE
+
+#### Milestone 9.1 - Zotero/API reliability polish (target: 2026-07-23)
+
+- [ ] Map pyzotero/network failures in `ZoteroClient` to `SourceError` with actionable suggestions
+- [ ] Add tests for Zotero API timeouts, 401/403, and transient failures
+- [ ] Audit `doctor` output; decide on and optionally implement `doctor --deep` semantic checks
+
+#### Milestone 9.2 - Google Scholar v1.1 feasibility (target: 2026-08-06)
+
+- [ ] Prototype best-effort Google Scholar client behind feature flag
+- [ ] Add fixture-driven parser tests
 - [ ] Decide ship/defer based on reliability criteria
 
-#### Milestone 8.4 - Documentation and status operations (target: 2026-05-22)
+#### Milestone 9.3 - Operational cadence reset (target: 2026-07-23)
 
-- [ ] Keep `specs/planning.md` and `specs/progress.md` synchronized weekly
-- [ ] Reintroduce `logs/` weekly and session status cadence
-- [ ] Add release checklist updates for post-v0.2 workflow
-- [ ] Implement docs consistency guardrail in CI:
-  - [ ] Add script/check to validate phase, status, and current version alignment between planning and progress docs
-  - [ ] Fail CI on drift and print a fix hint
+- [ ] Resume weekly logs under `logs/weekly/`
+- [ ] Update release checklist for post-v0.3 workflow
+- [ ] Keep planning/progress/docs consistency check passing weekly
+
+#### Milestone 9.4 - v0.4.0 scope definition (target: 2026-08-13)
+
+- [ ] Define v0.4.0/v1.1 feature scope (must-have / should-have / defer)
+- [ ] Define acceptance criteria per feature
+- [ ] Publish milestone issue list
+
+#### Milestone 9.5 - Karakeep bookmark search integration (target: 2026-08-13)
+
+- [ ] Add Karakeep credentials to `config.py` and `orbitr init` prompts (`karakeep_api_key`, `karakeep_server_url`)
+- [ ] Create `src/orbitr/clients/karakeep.py` extending `BaseClient`
+  - [ ] Implement `search_bookmarks(query, limit)` against `/api/search-bookmarks`
+  - [ ] Implement `list_bookmarks(...)` for filtered listing
+  - [ ] Map Karakeep JSON to `Paper` model with `source="karakeep"`
+- [ ] Add `orbitr karakeep search <query>` command (Phase 1 scope)
+  - [ ] Options: `--server`, `--limit`, `--format`
+  - [ ] Honor TTY/JSON auto-format and `--no-color`
+- [ ] (Optional Phase 2) Wire `karakeep` into `orbitr search --sources` alongside arXiv/Semantic Scholar
+- [ ] Add fixture-based `respx` tests for `/api/search-bookmarks`
+- [ ] Update README/help text with Karakeep setup example
 
 ## Risks and Constraints
 
@@ -155,25 +197,28 @@
 - Google Scholar scraping fragility
 - Semantic Scholar rate limiting when no API key is configured
 - Async command complexity in Typer command boundaries
+- Karakeep API availability and self-hosted URL configuration burden on users
 
 ### Scope Risks
 
 - Recommendation quality can trigger scope creep
 - Zotero edge cases (group libraries, linked attachments) remain deferred
 
-## Success Metrics (v0.3 planning window)
+## Success Metrics (v0.4/v1.1 planning window)
 
 ### Delivery Metrics
 
-- [ ] v0.3.0 milestones and dates approved
-- [ ] All v0.3.0 must-have features mapped to issues
+- [ ] v0.4.0/v1.1 milestones and dates approved
+- [ ] All must-have features mapped to issues
 
 ### Quality Metrics
 
-- [ ] CI includes coverage report and threshold gate
+- [ ] CI coverage gate maintained at ≥ 80% with no regressions
+- [ ] Zotero client failures map cleanly to `SourceError` without raw tracebacks
 - [ ] No regression in existing command help, error handling, or output contracts
 
 ### Operational Metrics
 
 - [ ] Weekly status entry added under `logs/`
 - [ ] Session notes captured for major implementation blocks
+- [ ] Planning/progress docs consistency check passes on every PR

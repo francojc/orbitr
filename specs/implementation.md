@@ -1,8 +1,8 @@
 # Development Implementation Details
 
 **Project:** orbitr
-**Status:** Phases 1–6 complete (v0.1.0 released) — Phase 7 planned
-**Last Updated:** 2026-04-06
+**Status:** Phases 1–8 complete (v0.3.0 released) — Phase 9 active
+**Last Updated:** 2026-07-09
 
 ## Architecture
 
@@ -36,7 +36,7 @@ orbitr/
 │       │   ├── recommend.py # orbitr recommend
 │       │   ├── query.py     # orbitr query
 │       │   ├── export.py    # orbitr export
-│       │   ├── zotero.py    # orbitr zotero add / collections / new / list / get / search / export-md
+│       │   ├── zotero.py    # orbitr zotero add / collections / new / list / get / search / recent / export-md
 │       │   ├── cache.py     # orbitr cache stats / clean / clear
 │       │   ├── init.py      # orbitr init
 │       │   └── doctor.py    # orbitr doctor
@@ -44,6 +44,7 @@ orbitr/
 │       │   ├── base.py              # Abstract base client (retry, rate limit)
 │       │   ├── arxiv.py             # arXiv Atom feed client
 │       │   ├── semantic_scholar.py  # Semantic Scholar REST client
+│       │   ├── karakeep.py          # Karakeep REST client (bookmark search)
 │       │   # google_scholar.py — deferred to v1.1
 │       ├── core/
 │       │   ├── models.py        # Paper, Author, SearchResult (Pydantic)
@@ -122,7 +123,15 @@ orbitr/
    - **Recommendations endpoint:** `/recommendations/v1/papers/forpaper/{id}`
    - **Dependencies:** `httpx`, `clients/base.py`
 
-6. **`core/deduplication.py`** *(Phase 2 — complete)*
+6. **`clients/karakeep.py`** *(Phase 9 — planned)*
+   - **Purpose:** Queries the Karakeep REST API to search a user's saved bookmarks
+   - **Public Interface:** `search_bookmarks(query, limit) -> SearchResult`, `list_bookmarks(...)`
+   - **Field mapping:** `title` → `Paper.title`; `content.text` or excerpt → `Paper.abstract`; bookmark `url` → `Paper.url`; `tags` → `Paper.categories`; `createdAt` → `Paper.published_date` (fallback/recency proxy); `source` set to `"karakeep"`
+   - **Auth:** `Authorization: Bearer <karakeep_api_key>` header; base URL from `Config.credentials.karakeep_server_url` (defaults to Karakeep Cloud or a documented placeholder)
+   - **Endpoints:** `GET /api/search-bookmarks` for search; `GET /bookmarks` for filtered listing
+   - **Dependencies:** `httpx`, `clients/base.py`
+
+7. **`core/deduplication.py`** *(Phase 2 — complete)*
    - **Purpose:** Merges result sets from multiple sources using a three-stage matching pipeline
    - **Public Interface:** `deduplicate(papers, threshold=0.85) -> list[Paper]`
    - **Match priority:** (1) exact DOI → (2) exact arXiv ID → (3) fuzzy title (`rapidfuzz.fuzz.token_sort_ratio` ≥ 85%) + author surname overlap
@@ -269,14 +278,15 @@ orbitr/
     - **`list`:** options `--collection/-c` (name or key), `--limit/-n` (default 25), `--sort` (`dateModified`, `title`, `date`), `--format/-f` (`table`, `json`, `keys`); table columns: `Key`, `Title` (truncated 60 chars), `Authors` (first author + "et al."), `Year`, `Type`; `--format keys` outputs bare item keys one-per-line for piping
     - **`get <item_key>`:** options `--format/-f` (`detail`, `json`), `--notes/--no-notes` (default: include); `detail` renders a Rich panel with title, authors, abstract, venue, year, DOI, URL, tags, collections, and notes; `json` writes the full structured dict; reports local PDF path when a PDF attachment is present
     - **`search <query>`:** options `--collection/-c`, `--limit/-n`, `--format/-f` (`table`, `json`, `keys`); same table format as `list`
+    - **`recent`:** browse recently added Zotero reference items; options `--days`, `--since`, `--collection/-c`, `--limit/-n`, `--format/-f` (`table`, `json`, `keys`); uses `dateAdded` descending sort and excludes `annotation`, `attachment`, and `note` child item types by default
     - **`export-md <item_key>`:** options `--output/-o` (path or directory; default stdout); when `--output` is a directory, auto-generates filename `YYYY-Author-Short-Title.md`; output is a markdown file with YAML frontmatter (`title`, `authors`, `year`, `doi`, `zotero_key`, `zotero_url`, `tags`, `type: source`) followed by `# Title`, author/year/venue/DOI header block, `## Abstract`, and `## Notes` sections
-    - **`--format keys`** supported on `list` and `search` for pipeable output (e.g., `orbitr zotero list -c mycol --format keys | xargs -I{} orbitr zotero get {}`)
+    - **`--format keys`** supported on `list`, `search`, and `recent` for pipeable output (e.g., `orbitr zotero list -c mycol --format keys | xargs -I{} orbitr zotero get {}`)
     - **ConfigError** (missing credentials) → exit 3 throughout
     - **Dependencies:** `zotero/client.py`, `commands/paper.py` (`fetch_paper`), `display/`
 
 22. **Component tree additions (Phase 7)**
-    - `tests/test_zotero.py` — extended with tests for `list`, `get`, `search`, `export-md` subcommands
-    - Zotero item dict fixtures added under `tests/fixtures/` (recorded `zot.items()`, `zot.item()`, `zot.children()` responses)
+    - `tests/test_zotero.py` — extended with tests for `list`, `get`, `search`, `recent`, `export-md` subcommands
+    - Zotero item dict fixtures added under `tests/fixtures/` (recorded `zot.items()`, `z.item()`, `zot.children()` responses)
 
 ### Data Model
 

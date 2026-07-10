@@ -1,24 +1,24 @@
 # Development Project Progress
 
 **Project:** orbitr
-**Status:** Active development - v0.3.0 planning in progress
-**Last Updated:** 2026-04-17
+**Status:** Active development - v0.4.0/v1.1 planning; v0.3.0 shipped
+**Last Updated:** 2026-07-09
 
 ## Current Status Overview
 
 ### Development Phase
 
-- **Current Phase:** Phase 8 (v0.3.0 planning and reliability)
-- **Phase Progress:** Phases 1-7 complete
-- **Overall Project Progress:** v0.1.x and v0.2.0 shipped; roadmap reset in progress
+- **Current Phase:** Phase 9 (reliability hardening and v1.1 exploration)
+- **Phase Progress:** Phases 1-8 complete; v0.3.0 tagged 2026-05-08
+- **Overall Project Progress:** v0.1.x, v0.2.0, and v0.3.0 shipped
 
 ### Recent Accomplishments
 
-- Phase 7 complete: Zotero `list/get/search/export-md` shipped with tests
-- `v0.2.0` tagged and released
-- README and release docs updated for new Zotero command surface
-- Release automation improved (`just release`)
-- Test suite expanded to 410 passing tests
+- Phase 8 delivered: `zotero recent`, docs-consistency guardrail, and coverage CI gate shipped in v0.3.0
+- `v0.3.0` tagged 2026-05-08
+- CI coverage threshold set to 80%; current combined coverage is ~90%
+- README, CHANGELOG, and release docs updated
+- Test suite expanded to 421 passing tests
 
 ## Milestone Tracking
 
@@ -31,51 +31,59 @@
 - [x] Phase 5: Testing and documentation
 - [x] Phase 6: Initial release
 - [x] Phase 7: Zotero library enhancements
+- [x] Phase 8: v0.3.0 planning and reliability
 - [x] v0.2.0 release tag
+- [x] v0.3.0 release tag
 
-### Active Milestones (Phase 8)
+### Active Milestones (Phase 9)
 
-- [ ] Milestone 8.1 - v0.3 scope and acceptance criteria, including Zotero recent-entry UX decision (target: 2026-04-24)
-- [ ] Milestone 8.2 - coverage baseline and CI gate (target: 2026-05-01)
-- [ ] Milestone 8.3 - API reliability + Google Scholar v1.1 feasibility slice (target: 2026-05-15)
-- [ ] Milestone 8.4 - documentation and status cadence reset + CI consistency guardrail (target: 2026-05-22)
+- [ ] Milestone 9.1 - Zotero/API reliability polish (target: 2026-07-23)
+- [ ] Milestone 9.2 - Google Scholar v1.1 feasibility spike (target: 2026-08-06)
+- [ ] Milestone 9.3 - Operational cadence reset (target: 2026-07-23)
+- [ ] Milestone 9.4 - v0.4.0/v1.1 scope and acceptance criteria (target: 2026-08-13)
+- [ ] Milestone 9.5 - Karakeep bookmark search integration (target: 2026-08-13)
 
 ### At-Risk Milestones
 
-- **Potential risk:** v0.3 scope remains undefined, which can delay implementation start
-- **Potential risk:** Google Scholar feasibility may fail reliability criteria
+- **Risk:** Project paused after v0.3.0 tag (no commits since 2026-05-08); momentum and log cadence lost
+- **Risk:** Google Scholar feasibility may fail reliability criteria
+- **Risk:** `zotero recent` shipped without deep Zotero exception mapping; API failures may surface raw tracebacks
 
 ## Build and Test Status
 
 ### Build Health
 
-- **Last Confirmed Healthy Run:** 2026-04-08 (`pytest`, `ruff`, `pyright`)
+- **Last Confirmed Healthy Run:** 2026-07-09 (`pytest` 421 passed, `ruff`, `pyright`, coverage 89.6%)
 - **Warnings:** None currently tracked
 
 ### Test Status
 
-- **Tests Passing:** 410
-- **Coverage Tracking:** Not yet enforced in CI (planned in Milestone 8.2)
+- **Tests Passing:** 421
+- **Coverage Tracking:** Enforced in CI at 80% threshold; current coverage ~89.6%
 - **Open Defects:** No active critical/high defects recorded
 
 ## Current Work
 
 ### Active Focus
 
-- Finalize v0.3 scope and sequencing
-- Add measurable quality gate via coverage in CI
-- Establish lightweight operational logging cadence (`logs/`)
-- Decide and scope Zotero recently-added workflow (`zotero recent` vs extending `zotero search`)
-- Define and implement docs consistency guardrails in CI
-- Strengthen API failure handling and health-check depth
+- Catch up `logs/` entries since 2026-W16 and restart weekly cadence
+- Map Zotero/pyzotero failures to `SourceError` with actionable suggestions
+- Add failure-mode tests for Zotero API timeouts, 401/403, and transient 5xx
+- Decide on and optionally implement `doctor --deep` semantic checks
+- Prototype Google Scholar client behind feature flag and decide ship/defer
+- Define v0.4.0/v1.1 scope, acceptance criteria, and issue list
+- Design and scaffold Karakeep API integration (`clients/karakeep.py` + `orbitr karakeep search`)
 
 ### Open Tasks (next 2 weeks)
 
-- [ ] Publish v0.3 milestone issue list with owners and acceptance criteria
-- [ ] Decide Zotero recently-added command design and write command-level acceptance tests
-- [ ] Add `pytest-cov` and set an initial CI threshold
-- [ ] Add docs consistency check in CI for planning/progress phase and version fields
-- [ ] Verify graceful error exits for API/query failures and add missing test coverage
+- [x] Catch up `logs/weekly/` entries and add this session note
+- [x] Write `logs/weekly/2026-W28.md` to restart status cadence
+- [ ] Map `ZoteroClient` network/API failures to `SourceError` and add tests
+- [ ] Prototype Google Scholar client behind feature flag
+- [ ] Define v0.4.0/v1.1 milestone issue list with acceptance criteria
+- [ ] Add Karakeep credentials to `config.py` and `orbitr init`
+- [ ] Create `src/orbitr/clients/karakeep.py` with `search_bookmarks` and tests
+- [ ] Add `orbitr karakeep search <query>` command with `--format` support
 
 ### Blockers
 
@@ -101,13 +109,14 @@
 
 ### Next Release
 
-- **Version:** v0.3.0 (planning stage)
-- **Target Window:** TBD after Milestone 8.1
-- **Candidate Themes:** reliability, coverage discipline, optional Google Scholar feasibility outcome
+- **Version:** v0.4.0 (planning stage)
+- **Target Window:** TBD after Milestone 9.4
+- **Candidate Themes:** reliability hardening, Karakeep bookmark search, optional Google Scholar feasibility outcome
 
 ### Release History
 
 | Version | Date | Key Changes |
 |---|---|---|
+| 0.3.0 | 2026-04-17 | `zotero recent`, docs-consistency guardrail, coverage CI gate |
 | 0.2.0 | 2026-04-08 | Zotero `list/get/search/export-md`, command and docs expansion |
 | 0.1.1 | 2026-04-06 | Stabilization patch after initial release |
