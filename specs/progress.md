@@ -1,8 +1,8 @@
 # Development Project Progress
 
 **Project:** orbitr
-**Status:** Active development - v0.4.0/v1.1 planning; v0.3.0 shipped
-**Last Updated:** 2026-07-09
+**Status:** v0.4.0 release hardening; v0.3.0 shipped
+**Last Updated:** 2026-07-10
 
 ## Current Status Overview
 
@@ -37,7 +37,7 @@
 
 ### Active Milestones (Phase 9)
 
-- Reliability hardening and dedicated Karakeep foundation are implemented in the current worktree; release validation and live smoke evidence remain pending.
+- Reliability hardening and dedicated Karakeep workflow are implemented; automated release gates pass and Zotero live read smoke is recorded. Karakeep live smoke remains pending until server URL is configured.
 
 - [ ] Milestone 9.1 - Zotero/API reliability polish (target: 2026-07-23)
 - [ ] Milestone 9.2 - Google Scholar v1.1 feasibility spike (target: 2026-08-06)
@@ -83,7 +83,7 @@
 - [x] Write `logs/weekly/2026-W28.md` to restart status cadence
 - [x] Map `ZoteroClient` network/API failures to `SourceError` and add tests
 - [ ] Prototype Google Scholar client behind feature flag
-- [ ] Define v0.4.0/v1.1 milestone issue list with acceptance criteria
+- [x] Define v0.4.0/v1.1 milestone issue list with acceptance criteria
 - [x] Add Karakeep credentials to `config.py` and `orbitr init`
 - [x] Create `src/orbitr/clients/karakeep.py` with `search_bookmarks` and tests
 - [x] Add `orbitr karakeep search <query>` command with `--format` support

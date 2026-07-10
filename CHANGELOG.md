@@ -6,6 +6,30 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.0] — 2026-07-10
+
+### Added
+
+- Dedicated `orbitr karakeep search` command for read-only bookmark search.
+- Layered Karakeep configuration with secure credential persistence.
+- Normalized Zotero API and network failures with actionable CLI guidance.
+- Expanded failure-mode tests and release coverage evidence.
+
+### Changed
+
+- Karakeep remains outside `orbitr search --sources`; it does not affect
+  academic ranking or deduplication.
+- `doctor` keeps fast default checks and reports configured Karakeep connectivity.
+
+### Release notes
+
+- Automated gates pass: 440 tests, 89% coverage, Ruff, Pyright, build, and docs
+  consistency.
+- Zotero live read smoke passed.
+- Karakeep live smoke remains pending because no server URL is configured; no
+  release claim should be made until that check runs.
+- Google Scholar remains deferred to v1.1 feasibility work.
+
 ## [0.1.0] — 2026-04-06
 
 Initial release.

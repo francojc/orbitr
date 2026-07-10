@@ -1,8 +1,8 @@
 # Development Project Planning
 
 **Project:** orbitr
-**Status:** Active development - v0.4.0/v1.1 planning (v0.3.0 shipped)
-**Last Updated:** 2026-07-09
+**Status:** v0.4.0 release hardening (v0.3.0 shipped)
+**Last Updated:** 2026-07-10
 
 ## Project Overview
 
