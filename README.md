@@ -102,13 +102,14 @@ just fmt         # auto-format source files
 
 ### API credentials
 
-`orbitr` works without credentials; providing them increases rate limits and
-enables Zotero integration.
+`orbitr` works without credentials; providing them increases rate limits, enables Zotero integration, or connects a
+private Karakeep bookmark server.
 
 | Credential | Purpose |
 |---|---|
 | Semantic Scholar API key | Higher rate limits (get one at semanticscholar.org/product/api) |
 | Zotero User ID + API key | `orbitr zotero` commands |
+| Karakeep API key + server URL | `orbitr karakeep search` (private bookmarks) |
 
 ```bash
 orbitr init      # guided interactive setup
@@ -148,6 +149,9 @@ orbitr zotero add 2503.19260 --collection "Reading List" --tags "llm,linguistics
 
 # Browse a Zotero collection
 orbitr zotero list -c "Reading List"
+
+# Search a private Karakeep bookmark library (not part of academic search)
+orbitr karakeep search "retrieval augmented generation" --limit 20
 
 # Inspect a single Zotero item (use a key from zotero list)
 orbitr zotero get ABCD1234
@@ -645,8 +649,10 @@ Interactive first-time setup. Writes `~/.config/orbitr/config.toml` with mode
 orbitr init
 ```
 
-Prompts for Semantic Scholar API key, Zotero credentials, and default
-preferences. All values are optional and can be skipped.
+Prompts for Semantic Scholar, Zotero, and optional Karakeep credentials plus
+default preferences. All values are optional and can be skipped. Karakeep uses
+`KARAKEEP_API_KEY` and `KARAKEEP_SERVER_URL` when configured through the
+environment.
 
 ---
 
@@ -659,6 +665,25 @@ connectivity check fails.
 ```bash
 orbitr doctor
 ```
+
+---
+
+### `orbitr karakeep search`
+
+Searches a private Karakeep bookmark corpus using the configured Bearer token
+and server URL. This is deliberately a dedicated workflow; Karakeep is not a
+default orbitr academic-search source and does not affect academic ranking or
+deduplication.
+
+```bash
+orbitr karakeep search "transformer"
+orbitr karakeep search "reading list" --limit 20 --format json | jq .title
+orbitr karakeep search "papers" --server https://karakeep.example.org
+```
+
+Configure with `orbitr init`, or set `KARAKEEP_API_KEY` and
+`KARAKEEP_SERVER_URL`. The server URL must be an `http` or `https` URL without
+embedded credentials.
 
 ---
 
@@ -686,6 +711,8 @@ no_pager    = false
 semantic_scholar_api_key = ""
 zotero_user_id           = ""
 zotero_api_key           = ""
+karakeep_api_key         = ""
+karakeep_server_url      = ""
 ```
 
 ### Environment variables
@@ -701,6 +728,8 @@ zotero_api_key           = ""
 | `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar API key |
 | `ZOTERO_USER_ID` | Zotero user ID |
 | `ZOTERO_API_KEY` | Zotero API key |
+| `KARAKEEP_API_KEY` | Karakeep Bearer API key |
+| `KARAKEEP_SERVER_URL` | Karakeep server base URL |
 | `NO_COLOR` | Disable all ANSI color output |
 
 A template is provided in `.env.example`.

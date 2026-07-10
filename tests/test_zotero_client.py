@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from orbitr.exceptions import ConfigError, LumenError
+from orbitr.exceptions import ConfigError, LumenError, SourceError
 from orbitr.zotero.client import ZoteroClient
 
 # ---------------------------------------------------------------------------
@@ -92,6 +92,46 @@ def _make_client() -> tuple[ZoteroClient, MagicMock]:
 # ---------------------------------------------------------------------------
 # ZoteroClient instantiation
 # ---------------------------------------------------------------------------
+
+
+class TestZoteroFailureTranslation:
+    @pytest.mark.parametrize(
+        ("error_name", "expected"),
+        [
+            ("CouldNotReachURLError", "network"),
+            ("UserNotAuthorisedError", "authentication"),
+            ("ResourceNotFoundError", "not found"),
+            ("TooManyRequestsError", "rate limit"),
+        ],
+    )
+    def test_expected_pyzotero_errors_become_source_errors(self, error_name, expected):
+        from pyzotero import errors
+
+        client, zot_inner = _make_client()
+        zot_inner.collections.side_effect = getattr(errors, error_name)("secret-token")
+        with pytest.raises(SourceError) as exc_info:
+            client.list_collections()
+        assert expected in exc_info.value.message.lower()
+        assert "secret-token" not in str(exc_info.value)
+        assert exc_info.value.suggestion
+
+    def test_http_500_is_sanitized(self):
+        from pyzotero.errors import HTTPError
+
+        client, zot_inner = _make_client()
+        zot_inner.collections.side_effect = HTTPError(
+            "Code: 500 Response: secret-token"
+        )
+        with pytest.raises(SourceError) as exc_info:
+            client.list_collections()
+        assert "unavailable" in exc_info.value.message
+        assert "secret-token" not in str(exc_info.value)
+
+    def test_unexpected_programming_error_is_not_hidden(self):
+        client, zot_inner = _make_client()
+        zot_inner.collections.side_effect = ValueError("bug")
+        with pytest.raises(ValueError, match="bug"):
+            client.list_collections()
 
 
 class TestZoteroClientInit:

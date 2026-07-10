@@ -16,6 +16,7 @@ from orbitr.commands import (
     doctor,
     export,
     init,
+    karakeep,
     paper,
     query,
     recommend,
@@ -124,6 +125,7 @@ app.command("doctor")(doctor.doctor)
 # Subcommand groups
 # ------------------------------------------------------------------
 app.add_typer(zotero.app, name="zotero")
+app.add_typer(karakeep.app, name="karakeep")
 app.add_typer(cache.app, name="cache")
 
 

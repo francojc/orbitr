@@ -17,6 +17,8 @@ _CREDENTIALS: list[tuple[str, str, bool]] = [
     ("Semantic Scholar API key", "SEMANTIC_SCHOLAR_API_KEY", True),
     ("Zotero User ID", "ZOTERO_USER_ID", False),
     ("Zotero API key", "ZOTERO_API_KEY", True),
+    ("Karakeep API key", "KARAKEEP_API_KEY", True),
+    ("Karakeep server URL", "KARAKEEP_SERVER_URL", False),
 ]
 
 console = Console()
@@ -120,6 +122,8 @@ def init(ctx: typer.Context) -> None:
     file_ss = existing_creds.get("semantic_scholar_api_key", "")
     file_uid = existing_creds.get("zotero_user_id", "")
     file_zot = existing_creds.get("zotero_api_key", "")
+    file_karakeep_key = existing_creds.get("karakeep_api_key", "")
+    file_karakeep_url = existing_creds.get("karakeep_server_url", "")
 
     # --- Semantic Scholar ----------------------------------------------------
     console.print("\n[bold]Semantic Scholar[/bold]")
@@ -156,6 +160,20 @@ def init(ctx: typer.Context) -> None:
         password=True,
     )
 
+    # --- Karakeep ------------------------------------------------------------
+    console.print("\n[bold]Karakeep (optional)[/bold]")
+    console.print(
+        "Search your private bookmark library. Configure an API key and server URL."
+    )
+    console.print()
+    karakeep_key = _credential_prompt(
+        "Karakeep API key", "KARAKEEP_API_KEY", file_karakeep_key, password=True
+    )
+    console.print()
+    karakeep_url = _credential_prompt(
+        "Karakeep server URL", "KARAKEEP_SERVER_URL", file_karakeep_url
+    )
+
     # --- Defaults ------------------------------------------------------------
     console.print("\n[bold]Defaults[/bold]\n")
 
@@ -184,6 +202,8 @@ def init(ctx: typer.Context) -> None:
         semantic_scholar_api_key=(ss_key or file_ss),
         zotero_user_id=(zotero_user_id or file_uid),
         zotero_api_key=(zotero_api_key or file_zot),
+        karakeep_api_key=(karakeep_key or file_karakeep_key),
+        karakeep_server_url=(karakeep_url or file_karakeep_url),
     )
     config.max_results = int(max_results)
     config.format = fmt

@@ -22,3 +22,5 @@ coverage.xml
 .direnv/
 .aider*
 logs/
+plans/
+PLAN.md

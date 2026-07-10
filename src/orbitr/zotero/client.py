@@ -7,11 +7,77 @@ Group libraries and linked attachments are deferred to v2.
 from __future__ import annotations
 
 import logging
+import re
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from orbitr.core.models import Paper
-from orbitr.exceptions import ConfigError, LumenError
+from orbitr.exceptions import ConfigError, LumenError, SourceError
 
 logger = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
+
+
+def _zotero_error(exc: Exception, operation: str) -> SourceError:
+    """Translate a pyzotero failure without exposing its response body."""
+    name = type(exc).__name__
+    text = str(exc)
+    status_match = re.search(r"(?:Code|HTTP|status)[: =]+(4\d\d|5\d\d)", text, re.I)
+    status = int(status_match.group(1)) if status_match else None
+
+    if name in {"UserNotAuthorisedError", "MissingCredentialsError"} or status in {
+        401,
+        403,
+    }:
+        return SourceError(
+            f"Zotero: authentication or permission denied during {operation}.",
+            suggestion="Check your Zotero User ID/API key and permissions, then run `orbitr init`.",
+        )
+    if name == "ResourceNotFoundError" or status == 404:
+        return SourceError(
+            f"Zotero: requested resource was not found during {operation}.",
+            suggestion="Check the item or collection key with `orbitr zotero list`.",
+        )
+    if name in {"TooManyRequestsError", "TooManyRetriesError"} or status == 429:
+        return SourceError(
+            f"Zotero: rate limit reached during {operation}.",
+            suggestion="Wait a moment and retry the command.",
+        )
+    if name in {"CouldNotReachURLError", "TimeoutException", "ConnectError"}:
+        return SourceError(
+            f"Zotero: network timeout or connection failure during {operation}.",
+            suggestion="Check your internet connection and try again.",
+        )
+    if status is not None and 500 <= status < 600:
+        return SourceError(
+            f"Zotero: service unavailable during {operation} (HTTP {status}).",
+            suggestion="The Zotero API may be temporarily unavailable. Try again later.",
+        )
+    return SourceError(
+        f"Zotero returned an invalid or unexpected response during {operation}.",
+        suggestion="Retry the command; run `orbitr doctor` if the problem persists.",
+    )
+
+
+def _require_mapping(value: Any, operation: str) -> dict:
+    """Validate a write response without exposing upstream payload details."""
+    if not isinstance(value, dict):
+        raise SourceError(
+            f"Zotero returned an invalid response during {operation}.",
+            suggestion="Retry the command; run `orbitr doctor` if the problem persists.",
+        )
+    return value
+
+
+def _require_items(value: Any, operation: str) -> list[dict]:
+    """Validate an item-list response without leaking its contents."""
+    if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
+        raise SourceError(
+            f"Zotero returned an invalid response during {operation}.",
+            suggestion="Retry the command; run `orbitr doctor` if the problem persists.",
+        )
+    return value
 
 
 class ZoteroClient:
@@ -26,6 +92,24 @@ class ZoteroClient:
         self._user_id = user_id
         self._api_key = api_key
         self._zot = self._build_client()
+
+    def _call(
+        self, operation: str, method: Callable[..., _T], *args: Any, **kwargs: Any
+    ) -> _T:
+        """Call pyzotero and normalize expected upstream failures."""
+        try:
+            return method(*args, **kwargs)
+        except LumenError:
+            raise
+        except Exception as exc:
+            if type(exc).__module__.startswith("pyzotero") or type(exc).__name__ in {
+                "TimeoutException",
+                "ConnectError",
+                "ReadTimeout",
+                "ConnectTimeout",
+            }:
+                raise _zotero_error(exc, operation) from exc
+            raise
 
     def _build_client(self):
         """Instantiate and return a pyzotero.zotero.Zotero client."""
@@ -74,7 +158,10 @@ class ZoteroClient:
             "collections": [collection_key] if collection_key else [],
             "tags": [{"tag": t} for t in (tags or [])],
         }
-        resp = self._zot.create_items([item])
+        resp = _require_mapping(
+            self._call("adding an item", self._zot.create_items, [item]),
+            "adding an item",
+        )
         if resp.get("failed"):
             first_error = next(iter(resp["failed"].values()), {})
             raise LumenError(
@@ -91,7 +178,10 @@ class ZoteroClient:
             ``data`` sub-dict containing at least ``name`` and
             ``parentCollection``.
         """
-        return self._zot.collections()
+        return _require_items(
+            self._call("listing collections", self._zot.collections),
+            "listing collections",
+        )
 
     def create_collection(self, name: str, parent_key: str | None = None) -> dict:
         """Create a new Zotero collection.
@@ -110,7 +200,12 @@ class ZoteroClient:
         payload: dict = {"name": name}
         if parent_key:
             payload["parentCollection"] = parent_key
-        resp = self._zot.create_collections([payload])
+        resp = _require_mapping(
+            self._call(
+                "creating a collection", self._zot.create_collections, [payload]
+            ),
+            "creating a collection",
+        )
         if resp.get("failed"):
             first_error = next(iter(resp["failed"].values()), {})
             raise LumenError(
@@ -170,15 +265,53 @@ class ZoteroClient:
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
         if collection_key:
-            self._zot.add_parameters(limit=limit, **kwargs)
+            self._call(
+                "preparing collection listing",
+                self._zot.add_parameters,
+                limit=limit,
+                **kwargs,
+            )
             if limit > 100:
-                return self._zot.everything(self._zot.collection_items(collection_key))
-            return self._zot.collection_items(collection_key, limit=limit, **kwargs)
+                page = self._call(
+                    "listing collection items",
+                    self._zot.collection_items,
+                    collection_key,
+                )
+                return _require_items(
+                    self._call(
+                        "paginating collection items", self._zot.everything, page
+                    ),
+                    "paginating collection items",
+                )
+            return _require_items(
+                self._call(
+                    "listing collection items",
+                    self._zot.collection_items,
+                    collection_key,
+                    limit=limit,
+                    **kwargs,
+                ),
+                "listing collection items",
+            )
         else:
-            self._zot.add_parameters(limit=limit, **kwargs)
+            self._call(
+                "preparing library listing",
+                self._zot.add_parameters,
+                limit=limit,
+                **kwargs,
+            )
             if limit > 100:
-                return self._zot.everything(self._zot.items(**kwargs))
-            return self._zot.items(limit=limit, **kwargs)
+                page = self._call("listing library items", self._zot.items, **kwargs)
+                return _require_items(
+                    self._call("paginating library items", self._zot.everything, page),
+                    "paginating library items",
+                )
+            return _require_items(
+                self._call(
+                    "listing library items", self._zot.items, limit=limit, **kwargs
+                ),
+                "listing library items",
+            )
 
     def get_item(
         self,
@@ -203,7 +336,12 @@ class ZoteroClient:
         Raises:
             LumenError: If the item key is not found.
         """
-        item = self._zot.item(item_key)
+        item = self._call("getting an item", self._zot.item, item_key)
+        if item is not None and not isinstance(item, dict):
+            raise SourceError(
+                "Zotero returned an invalid response while getting an item.",
+                suggestion="Retry the command; run `orbitr doctor` if the problem persists.",
+            )
         if not item:
             raise LumenError(
                 f"Zotero item '{item_key}' not found.",
@@ -214,7 +352,11 @@ class ZoteroClient:
         attachments: list[dict] = []
 
         if include_children:
-            for child in self._zot.children(item_key):
+            children = _require_items(
+                self._call("getting item children", self._zot.children, item_key),
+                "getting item children",
+            )
+            for child in children:
                 data = child.get("data", {})
                 if data.get("itemType") == "note":
                     notes.append(data.get("note", ""))
@@ -248,6 +390,23 @@ class ZoteroClient:
             List of raw Zotero item dicts whose metadata matches *query*.
         """
         if collection_key:
-            self._zot.add_parameters(q=query, limit=limit)
-            return self._zot.collection_items(collection_key)
-        return self._zot.items(q=query, limit=limit)
+            self._call(
+                "preparing collection search",
+                self._zot.add_parameters,
+                q=query,
+                limit=limit,
+            )
+            return _require_items(
+                self._call(
+                    "searching collection items",
+                    self._zot.collection_items,
+                    collection_key,
+                ),
+                "searching collection items",
+            )
+        return _require_items(
+            self._call(
+                "searching library items", self._zot.items, q=query, limit=limit
+            ),
+            "searching library items",
+        )

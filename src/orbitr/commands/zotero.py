@@ -299,6 +299,8 @@ def zotero_collections(
         raise typer.Exit(code=3) from exc
     except LumenError as exc:
         _err.print(f"[red]Error:[/red] {exc.message}")
+        if exc.suggestion:
+            _err.print(f"[dim]{exc.suggestion}[/dim]")
         raise typer.Exit(code=1) from exc
 
     if not collections:

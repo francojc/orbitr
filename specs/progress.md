@@ -37,6 +37,8 @@
 
 ### Active Milestones (Phase 9)
 
+- Reliability hardening and dedicated Karakeep foundation are implemented in the current worktree; release validation and live smoke evidence remain pending.
+
 - [ ] Milestone 9.1 - Zotero/API reliability polish (target: 2026-07-23)
 - [ ] Milestone 9.2 - Google Scholar v1.1 feasibility spike (target: 2026-08-06)
 - [ ] Milestone 9.3 - Operational cadence reset (target: 2026-07-23)
@@ -47,6 +49,7 @@
 
 - **Risk:** Project paused after v0.3.0 tag (no commits since 2026-05-08); momentum and log cadence lost
 - **Risk:** Google Scholar feasibility may fail reliability criteria
+- **Decision:** Karakeep remains a dedicated command in v0.4 and is not added to `orbitr search --sources`.
 - **Risk:** `zotero recent` shipped without deep Zotero exception mapping; API failures may surface raw tracebacks
 
 ## Build and Test Status
@@ -78,12 +81,12 @@
 
 - [x] Catch up `logs/weekly/` entries and add this session note
 - [x] Write `logs/weekly/2026-W28.md` to restart status cadence
-- [ ] Map `ZoteroClient` network/API failures to `SourceError` and add tests
+- [x] Map `ZoteroClient` network/API failures to `SourceError` and add tests
 - [ ] Prototype Google Scholar client behind feature flag
 - [ ] Define v0.4.0/v1.1 milestone issue list with acceptance criteria
-- [ ] Add Karakeep credentials to `config.py` and `orbitr init`
-- [ ] Create `src/orbitr/clients/karakeep.py` with `search_bookmarks` and tests
-- [ ] Add `orbitr karakeep search <query>` command with `--format` support
+- [x] Add Karakeep credentials to `config.py` and `orbitr init`
+- [x] Create `src/orbitr/clients/karakeep.py` with `search_bookmarks` and tests
+- [x] Add `orbitr karakeep search <query>` command with `--format` support
 
 ### Blockers
 

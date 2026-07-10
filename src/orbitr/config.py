@@ -31,6 +31,19 @@ VALID_SOURCES = ("arxiv", "semantic_scholar")
 VALID_FORMATS = ("table", "list", "detail", "json")
 
 
+def normalize_server_url(value: str) -> str:
+    """Validate and normalize an HTTP(S) service base URL."""
+    from urllib.parse import urlsplit, urlunsplit
+
+    raw = value.strip()
+    parsed = urlsplit(raw)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("server URL must use http:// or https:// and include a host")
+    if parsed.username or parsed.password:
+        raise ValueError("server URL must not include embedded credentials")
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path.rstrip("/"), "", ""))
+
+
 @dataclass
 class Credentials:
     """API credentials for external services."""
@@ -38,6 +51,8 @@ class Credentials:
     semantic_scholar_api_key: str = ""
     zotero_user_id: str = ""
     zotero_api_key: str = ""
+    karakeep_api_key: str = ""
+    karakeep_server_url: str = ""
 
 
 @dataclass
@@ -132,6 +147,12 @@ def load_config(
             zotero_api_key=_env_str(
                 "ZOTERO_API_KEY", creds_cfg.get("zotero_api_key", "")
             ),
+            karakeep_api_key=_env_str(
+                "KARAKEEP_API_KEY", creds_cfg.get("karakeep_api_key", "")
+            ),
+            karakeep_server_url=_env_str(
+                "KARAKEEP_SERVER_URL", creds_cfg.get("karakeep_server_url", "")
+            ),
         ),
     )
 
@@ -163,6 +184,8 @@ def write_config(config: Config, path: Path | None = None) -> Path:
             "semantic_scholar_api_key": config.credentials.semantic_scholar_api_key,
             "zotero_user_id": config.credentials.zotero_user_id,
             "zotero_api_key": config.credentials.zotero_api_key,
+            "karakeep_api_key": config.credentials.karakeep_api_key,
+            "karakeep_server_url": config.credentials.karakeep_server_url,
         },
     }
 

@@ -68,7 +68,15 @@ def _run_init(
 class TestInitSave:
     def test_exits_0_on_save(self):
         result = _run_init(
-            prompt_values=["sk-test-key", "user123", "zot-api-key", "10", "table"]
+            prompt_values=[
+                "sk-test-key",
+                "user123",
+                "zot-api-key",
+                "",
+                "",
+                "10",
+                "table",
+            ]
         )
         assert result.exit_code == 0
 
@@ -81,7 +89,7 @@ class TestInitSave:
             ) as mock_write,
             patch(
                 "rich.prompt.Prompt.ask",
-                side_effect=["sk-test", "uid", "zot", "10", "table"],
+                side_effect=["sk-test", "uid", "zot", "", "", "10", "table"],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
         ):
@@ -90,7 +98,7 @@ class TestInitSave:
         mock_write.assert_called_once()
 
     def test_config_path_shown(self):
-        result = _run_init(prompt_values=["", "", "", "10", "table"])
+        result = _run_init(prompt_values=["", "", "", "", "", "10", "table"])
         assert result.exit_code == 0
         assert "/tmp/config.toml" in result.output
 
@@ -107,7 +115,15 @@ class TestInitSave:
             patch("orbitr.commands.init.write_config", side_effect=capture_write),
             patch(
                 "rich.prompt.Prompt.ask",
-                side_effect=["my-ss-key", "my-uid", "my-zot-key", "10", "table"],
+                side_effect=[
+                    "my-ss-key",
+                    "my-uid",
+                    "my-zot-key",
+                    "",
+                    "",
+                    "10",
+                    "table",
+                ],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
         ):
@@ -129,7 +145,9 @@ class TestInitSave:
         with (
             patch("orbitr.config.load_config", return_value=_test_config()),
             patch("orbitr.commands.init.write_config", side_effect=capture),
-            patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "25", "list"]),
+            patch(
+                "rich.prompt.Prompt.ask", side_effect=["", "", "", "", "", "25", "list"]
+            ),
             patch("rich.prompt.Confirm.ask", return_value=True),
         ):
             runner.invoke(app, ["init"])
@@ -149,7 +167,10 @@ class TestInitAbort:
         with (
             patch("orbitr.config.load_config", return_value=_test_config()),
             patch("orbitr.commands.init.write_config") as mock_write,
-            patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
+            patch(
+                "rich.prompt.Prompt.ask",
+                side_effect=["", "", "", "", "", "10", "table"],
+            ),
             patch("rich.prompt.Confirm.ask", return_value=False),
         ):
             result = runner.invoke(app, ["init"])
@@ -158,7 +179,7 @@ class TestInitAbort:
 
     def test_abort_exit_code(self):
         result = _run_init(
-            prompt_values=["", "", "", "10", "table"],
+            prompt_values=["", "", "", "", "", "10", "table"],
             confirm_value=False,
         )
         # Aborted — no error, just no write
@@ -195,6 +216,8 @@ class TestInitRerun:
                     "existing-key",
                     "existing-uid",
                     "existing-zot",
+                    "",
+                    "",
                     "10",
                     "table",
                 ],
@@ -224,7 +247,10 @@ class TestInitEnvVarCredentials:
                 "orbitr.commands.init.write_config",
                 return_value=Path("/tmp/config.toml"),
             ),
-            patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
+            patch(
+                "rich.prompt.Prompt.ask",
+                side_effect=["", "", "", "", "", "10", "table"],
+            ),
             patch("rich.prompt.Confirm.ask", return_value=True),
             patch("orbitr.config._load_toml", return_value={}),
         ):
@@ -249,7 +275,8 @@ class TestInitEnvVarCredentials:
             patch("orbitr.commands.init.write_config", side_effect=capture),
             # User leaves SS prompt blank, fills Zotero, accepts defaults
             patch(
-                "rich.prompt.Prompt.ask", side_effect=["", "uid", "zot", "10", "table"]
+                "rich.prompt.Prompt.ask",
+                side_effect=["", "uid", "zot", "", "", "10", "table"],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
             patch("orbitr.config._load_toml", return_value=existing_toml),
@@ -275,7 +302,7 @@ class TestInitEnvVarCredentials:
             patch("orbitr.commands.init.write_config", side_effect=capture),
             patch(
                 "rich.prompt.Prompt.ask",
-                side_effect=["new-explicit-key", "uid", "zot", "10", "table"],
+                side_effect=["new-explicit-key", "uid", "zot", "", "", "10", "table"],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
             patch("orbitr.config._load_toml", return_value={}),
@@ -297,7 +324,10 @@ class TestInitEnvVarCredentials:
                 "orbitr.commands.init.write_config",
                 return_value=Path("/tmp/config.toml"),
             ),
-            patch("rich.prompt.Prompt.ask", side_effect=["", "", "", "10", "table"]),
+            patch(
+                "rich.prompt.Prompt.ask",
+                side_effect=["", "", "", "", "", "10", "table"],
+            ),
             patch("rich.prompt.Confirm.ask", return_value=True),
             patch("orbitr.config._load_toml", return_value={}),
         ):
@@ -333,7 +363,15 @@ class TestInitEnvVarCredentials:
             patch("orbitr.commands.init.write_config", side_effect=capture),
             patch(
                 "rich.prompt.Prompt.ask",
-                side_effect=["config-key", "config-uid", "config-zot", "10", "table"],
+                side_effect=[
+                    "config-key",
+                    "config-uid",
+                    "config-zot",
+                    "",
+                    "",
+                    "10",
+                    "table",
+                ],
             ),
             patch("rich.prompt.Confirm.ask", return_value=True),
             patch("orbitr.config._load_toml", return_value={}),

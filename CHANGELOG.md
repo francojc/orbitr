@@ -169,4 +169,16 @@ Initial release.
 
 ## Unreleased
 
-_Nothing yet._
+### Added
+
+- Dedicated `orbitr karakeep search` for read-only private bookmark search.
+- Layered Karakeep API key/server configuration and secure `orbitr init` prompts.
+- Fixture-driven Karakeep client and CLI tests.
+
+### Improved
+
+- Zotero pyzotero transport, authentication, rate-limit, not-found, and
+  malformed-response failures now map to actionable `SourceError` messages
+  without raw response bodies or tracebacks.
+- Karakeep remains intentionally outside `orbitr search --sources`; it does not
+  alter academic ranking or deduplication semantics.

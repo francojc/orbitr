@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from orbitr.config import CONFIG_FILE
+from orbitr.config import CONFIG_FILE, normalize_server_url
 
 console = Console()
 
@@ -80,6 +80,8 @@ def doctor(ctx: typer.Context) -> None:
         ("Semantic Scholar API key", creds.semantic_scholar_api_key),
         ("Zotero User ID", creds.zotero_user_id),
         ("Zotero API key", creds.zotero_api_key),
+        ("Karakeep API key", creds.karakeep_api_key),
+        ("Karakeep server URL", creds.karakeep_server_url),
     ]:
         set_status = bool(val)
         table.add_row(
@@ -104,6 +106,17 @@ def doctor(ctx: typer.Context) -> None:
         ]
         if creds.zotero_user_id and creds.zotero_api_key:
             tasks.append(_check_url("Zotero API", _HEALTH_ENDPOINTS["Zotero API"]))
+        if creds.karakeep_api_key and creds.karakeep_server_url:
+            try:
+                server = normalize_server_url(creds.karakeep_server_url)
+            except ValueError:
+                tasks.append(
+                    asyncio.sleep(
+                        0, result=("Karakeep API", False, "invalid server URL")
+                    )
+                )
+            else:
+                tasks.append(_check_url("Karakeep API", server, creds.karakeep_api_key))
         return await asyncio.gather(*tasks)
 
     results = asyncio.run(run_checks())

@@ -11,7 +11,7 @@ from typer.testing import CliRunner
 from orbitr.cli import app
 from orbitr.config import Config, Credentials
 from orbitr.core.models import Author, Paper
-from orbitr.exceptions import ConfigError, LumenError
+from orbitr.exceptions import ConfigError, LumenError, SourceError
 
 runner = CliRunner()
 
@@ -192,6 +192,20 @@ class TestZoteroAdd:
 # ---------------------------------------------------------------------------
 # orbitr zotero collections
 # ---------------------------------------------------------------------------
+
+
+class TestZoteroFailureOutput:
+    def test_source_error_uses_stderr_contract_without_traceback(self):
+        zot = _zot_mock()
+        zot.list_collections.side_effect = SourceError(
+            "Zotero unavailable", suggestion="Retry later."
+        )
+        with patch("orbitr.commands.zotero.ZoteroClient", return_value=zot):
+            result = _invoke("zotero", "collections")
+        assert result.exit_code == 1
+        assert "Zotero unavailable" in result.output
+        assert "Retry later." in result.output
+        assert "Traceback" not in result.output
 
 
 class TestZoteroCollections:
