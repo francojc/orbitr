@@ -33,7 +33,7 @@
 - [x] Robust help system, informative errors with suggestions, and `orbitr doctor` diagnostics
 - [x] Shell completions for Zsh, Bash, and Fish
 - [x] `orbitr init` guided setup for credentials and defaults
-- [ ] Karakeep API integration for personal bookmark search (read-only in v0.4)
+- [x] Karakeep API integration for personal bookmark search (read-only in v0.4)
 
 #### Non-Goals
 
@@ -178,17 +178,17 @@
 
 #### Milestone 9.5 - Karakeep bookmark search integration (target: 2026-08-13)
 
-- [ ] Add Karakeep credentials to `config.py` and `orbitr init` prompts (`karakeep_api_key`, `karakeep_server_url`)
-- [ ] Create `src/orbitr/clients/karakeep.py` extending `BaseClient`
-  - [ ] Implement `search_bookmarks(query, limit)` against `/api/search-bookmarks`
+- [x] Add Karakeep credentials to `config.py` and `orbitr init` prompts (`karakeep_api_key`, `karakeep_server_url`)
+- [x] Create `src/orbitr/clients/karakeep.py` extending `BaseClient`
+  - [x] Implement `search_bookmarks(query, limit)` against `/api/v1/bookmarks/search`
   - [ ] Implement `list_bookmarks(...)` for filtered listing
-  - [ ] Map Karakeep JSON to `Paper` model with `source="karakeep"`
-- [ ] Add `orbitr karakeep search <query>` command (Phase 1 scope)
-  - [ ] Options: `--server`, `--limit`, `--format`
-  - [ ] Honor TTY/JSON auto-format and `--no-color`
+  - [x] Map Karakeep JSON to `Paper` model with `source="karakeep"`
+- [x] Add `orbitr karakeep search <query>` command (Phase 1 scope)
+  - [x] Options: `--server`, `--limit`, `--format`
+  - [x] Honor TTY/JSON auto-format and `--no-color`
 - [ ] (Optional Phase 2) Wire `karakeep` into `orbitr search --sources` alongside arXiv/Semantic Scholar
-- [ ] Add fixture-based `respx` tests for `/api/search-bookmarks`
-- [ ] Update README/help text with Karakeep setup example
+- [x] Add fixture-based `respx` tests for `/api/v1/bookmarks/search`
+- [x] Update README/help text with Karakeep setup example
 
 ## Risks and Constraints
 

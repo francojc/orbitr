@@ -8,7 +8,7 @@ from orbitr.clients.karakeep import KarakeepClient
 from orbitr.exceptions import ConfigError, SourceError
 
 _URL = "https://keep.example.test"
-_ENDPOINT = f"{_URL}/api/search-bookmarks"
+_ENDPOINT = f"{_URL}/api/v1/bookmarks/search"
 
 
 def _client() -> KarakeepClient:
@@ -22,17 +22,20 @@ async def test_search_maps_bookmarks_and_authenticates():
             return_value=httpx.Response(
                 200,
                 json={
-                    "total": 1,
-                    "data": [
+                    "bookmarks": [
                         {
                             "id": "abc",
                             "title": "Saved paper",
-                            "url": "https://example.test/paper",
-                            "content": {"text": "Read this"},
+                            "content": {
+                                "type": "link",
+                                "url": "https://example.test/paper",
+                                "description": "Read this",
+                            },
                             "tags": [{"name": "research"}],
                             "createdAt": "2024-01-02T03:04:05Z",
                         }
                     ],
+                    "nextCursor": None,
                 },
             )
         )
@@ -48,7 +51,9 @@ async def test_search_maps_bookmarks_and_authenticates():
 @pytest.mark.asyncio
 async def test_empty_results_are_valid():
     with respx.mock:
-        respx.get(_ENDPOINT).mock(return_value=httpx.Response(200, json={"data": []}))
+        respx.get(_ENDPOINT).mock(
+            return_value=httpx.Response(200, json={"bookmarks": [], "nextCursor": None})
+        )
         result = await _client().search_bookmarks("nothing")
     assert result.papers == []
 
@@ -56,7 +61,9 @@ async def test_empty_results_are_valid():
 @pytest.mark.asyncio
 async def test_malformed_envelope_raises_source_error():
     with respx.mock:
-        respx.get(_ENDPOINT).mock(return_value=httpx.Response(200, json={"data": {}}))
+        respx.get(_ENDPOINT).mock(
+            return_value=httpx.Response(200, json={"bookmarks": {}})
+        )
         with pytest.raises(SourceError, match="invalid bookmark list"):
             await _client().search_bookmarks("x")
 

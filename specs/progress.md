@@ -37,13 +37,13 @@
 
 ### Active Milestones (Phase 9)
 
-- Reliability hardening and dedicated Karakeep workflow are implemented; automated release gates pass and Zotero live read smoke is recorded. Karakeep live smoke remains pending until server URL is configured.
+- Reliability hardening and dedicated Karakeep workflow are implemented; automated release gates pass, Zotero live read smoke is recorded, and Karakeep live search smoke passes against `/api/v1/bookmarks/search`.
 
 - [ ] Milestone 9.1 - Zotero/API reliability polish (target: 2026-07-23)
 - [ ] Milestone 9.2 - Google Scholar v1.1 feasibility spike (target: 2026-08-06)
 - [ ] Milestone 9.3 - Operational cadence reset (target: 2026-07-23)
 - [ ] Milestone 9.4 - v0.4.0/v1.1 scope and acceptance criteria (target: 2026-08-13)
-- [ ] Milestone 9.5 - Karakeep bookmark search integration (target: 2026-08-13)
+- [x] Milestone 9.5 - Karakeep bookmark search integration (target: 2026-08-13)
 
 ### At-Risk Milestones
 
@@ -75,7 +75,7 @@
 - Decide on and optionally implement `doctor --deep` semantic checks
 - Prototype Google Scholar client behind feature flag and decide ship/defer
 - Define v0.4.0/v1.1 scope, acceptance criteria, and issue list
-- Design and scaffold Karakeep API integration (`clients/karakeep.py` + `orbitr karakeep search`)
+- Optional: add filtered Karakeep listing if concrete workflow requires it
 
 ### Open Tasks (next 2 weeks)
 
@@ -87,6 +87,7 @@
 - [x] Add Karakeep credentials to `config.py` and `orbitr init`
 - [x] Create `src/orbitr/clients/karakeep.py` with `search_bookmarks` and tests
 - [x] Add `orbitr karakeep search <query>` command with `--format` support
+- [x] Validate live Karakeep search against `/api/v1/bookmarks/search`
 
 ### Blockers
 
@@ -114,7 +115,7 @@
 
 - **Version:** v0.4.0 (planning stage)
 - **Target Window:** TBD after Milestone 9.4
-- **Candidate Themes:** reliability hardening, Karakeep bookmark search, optional Google Scholar feasibility outcome
+- **Candidate Themes:** reliability hardening, optional Google Scholar feasibility outcome, Karakeep follow-up workflows
 
 ### Release History
 

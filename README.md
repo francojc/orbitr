@@ -658,9 +658,9 @@ environment.
 
 ### `orbitr doctor`
 
-Check configuration and connectivity to arXiv and Semantic Scholar (and Zotero
-if credentials are configured). Exits `0` if all checks pass, `1` if any
-connectivity check fails.
+Check configuration and connectivity to arXiv, Semantic Scholar, Zotero, and
+Karakeep when credentials are configured. Exits `0` if all checks pass, `1` if
+any connectivity check fails.
 
 ```bash
 orbitr doctor
@@ -683,7 +683,8 @@ orbitr karakeep search "papers" --server https://karakeep.example.org
 
 Configure with `orbitr init`, or set `KARAKEEP_API_KEY` and
 `KARAKEEP_SERVER_URL`. The server URL must be an `http` or `https` URL without
-embedded credentials.
+embedded credentials. orbitr uses Karakeep API v1 endpoint
+`/api/v1/bookmarks/search`.
 
 ---
 

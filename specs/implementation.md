@@ -126,9 +126,9 @@ orbitr/
 6. **`clients/karakeep.py`** *(Phase 9 — implemented; dedicated command in v0.4)*
    - **Purpose:** Queries the Karakeep REST API to search a user's saved bookmarks
    - **Public Interface:** `search_bookmarks(query, limit) -> SearchResult`; unsupported bookmark-by-ID calls return an actionable `SourceError`
-   - **Field mapping:** `title` → `Paper.title`; `content.text` or excerpt → `Paper.abstract`; bookmark `url` → `Paper.url`; `tags` → `Paper.categories`; `createdAt` → `Paper.published_date` (fallback/recency proxy); `source` set to `"karakeep"`
+   - **Field mapping:** bookmark `title` (falling back to link URL) → `Paper.title`; `description`, `summary`, `note`, or content text → `Paper.abstract`; link `content.url` → `Paper.url`; `tags[].name` → `Paper.categories`; `createdAt` → `Paper.published_date` (fallback/recency proxy); `source` set to `"karakeep"`
    - **Auth:** `Authorization: Bearer <karakeep_api_key>` header; base URL from `Config.credentials.karakeep_server_url` (required for self-hosted/private deployments; no implicit host is guessed)
-   - **Endpoints:** `GET /api/search-bookmarks` for search; filtered listing remains deferred until a concrete workflow requires it
+   - **Endpoints:** `GET /api/v1/bookmarks/search` for search; filtered listing remains deferred until a concrete workflow requires it
    - **Dependencies:** `httpx`, `clients/base.py`
 
 7. **`core/deduplication.py`** *(Phase 2 — complete)*

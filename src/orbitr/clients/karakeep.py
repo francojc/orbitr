@@ -49,10 +49,10 @@ class KarakeepClient(BaseClient):
         )
 
     async def search_bookmarks(self, query: str, limit: int = 10) -> SearchResult:
-        """Search bookmarks through ``/api/search-bookmarks``."""
+        """Search bookmarks through Karakeep's REST API."""
         response = await self._get(
-            f"{self.server_url}/api/search-bookmarks",
-            params={"q": query, "limit": min(limit, 100)},
+            f"{self.server_url}/api/v1/bookmarks/search",
+            params={"q": query, "limit": min(limit, 100), "includeContent": "true"},
         )
         try:
             payload = response.json()
@@ -66,9 +66,7 @@ class KarakeepClient(BaseClient):
                 "Karakeep returned an invalid search response.",
                 suggestion="Retry the command; check the configured server version.",
             )
-        raw_items = payload.get("data", payload.get("bookmarks"))
-        if raw_items is None:
-            raw_items = []
+        raw_items = payload.get("bookmarks", payload.get("data", []))
         if not isinstance(raw_items, list):
             raise SourceError(
                 "Karakeep returned an invalid bookmark list.",
@@ -100,15 +98,26 @@ class KarakeepClient(BaseClient):
     def _parse_bookmark(item: dict[str, Any]) -> Paper:
         """Map one Karakeep bookmark into the shared Paper model."""
         bookmark_id = str(item.get("id") or item.get("key") or "")
-        title = str(item.get("title") or item.get("url") or "(untitled bookmark)")
-        url = str(item.get("url") or "")
+        content = item.get("content")
+        url = ""
+        content_text = None
+        if isinstance(content, dict):
+            url = str(content.get("url") or "")
+            content_text = content.get("text") or content.get("description")
+        elif isinstance(content, str):
+            content_text = content
+        url = str(item.get("url") or url)
+        title = str(item.get("title") or url or "(untitled bookmark)")
         if not bookmark_id or not url:
             raise ValueError("bookmark requires id and url")
-        content = item.get("content")
-        if isinstance(content, dict):
-            abstract = content.get("text") or content.get("excerpt")
-        else:
-            abstract = item.get("excerpt") or item.get("text")
+        abstract = (
+            item.get("description")
+            or item.get("summary")
+            or item.get("note")
+            or content_text
+            or item.get("excerpt")
+            or item.get("text")
+        )
         tags_raw = item.get("tags", [])
         tags = []
         if isinstance(tags_raw, list):
